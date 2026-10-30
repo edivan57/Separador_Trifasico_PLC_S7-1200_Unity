@@ -1,0 +1,57 @@
+(*
+ * Diag_HIL.scl
+ * DB global de diagnostico temporal para la plataforma HIL.
+ * Importar como fuente externa ANTES de los controladores instrumentados.
+ * Unity no lee este DB, asi que su tamano y orden no afectan a DB1.
+ *
+ *   *_mem   : memoria de la instruccion RUNTIME (no tocar)
+ *   *_aux   : descarta el valor de la primera llamada a RUNTIME
+ *   *_ms    : tiempo de la ultima ejecucion [ms]
+ *   *_prom_ms / *_max_ms : promedio y maximo desde el ultimo reset [ms]
+ *   *_n     : numero de ejecuciones medidas
+ *   *_reset : poner en TRUE desde la tabla de observacion para reiniciar
+ *   mpc_qp_* / mpc_n_* : estado del solver QP del MPC
+ *)
+DATA_BLOCK Diag_HIL
+STRUCT
+    (* OB ciclico completo *)
+    ob_mem: LREAL;
+    ob_aux: LREAL;
+    ob_ms: LREAL;
+    ob_max_ms: LREAL;
+    eventos_perdidos: DINT;
+    ob_reset: BOOL;
+    (* PID *)
+    pid_mem: LREAL;
+    pid_aux: LREAL;
+    pid_ms: LREAL;
+    pid_prom_ms: LREAL;
+    pid_max_ms: LREAL;
+    pid_sum_ms: LREAL;
+    pid_n: DINT;
+    pid_reset: BOOL;
+    (* Fuzzy *)
+    fuzzy_mem: LREAL;
+    fuzzy_aux: LREAL;
+    fuzzy_ms: LREAL;
+    fuzzy_prom_ms: LREAL;
+    fuzzy_max_ms: LREAL;
+    fuzzy_sum_ms: LREAL;
+    fuzzy_n: DINT;
+    fuzzy_reset: BOOL;
+    (* MPC *)
+    mpc_mem: LREAL;
+    mpc_aux: LREAL;
+    mpc_ms: LREAL;
+    mpc_prom_ms: LREAL;
+    mpc_max_ms: LREAL;
+    mpc_sum_ms: LREAL;
+    mpc_n: DINT;
+    mpc_qp_estado: DINT;      (* ultimo estado del QP: >0 optimo, 0 tope, <0 infactible *)
+    mpc_iter_max: DINT;       (* maximo del contador de iteraciones en soluciones optimas *)
+    mpc_n_tope: DINT;         (* ejecuciones que llegaron al tope de 10 iteraciones *)
+    mpc_n_infactible: DINT;   (* ejecuciones con QP infactible *)
+    mpc_reset: BOOL;
+END_STRUCT
+BEGIN
+END_DATA_BLOCK

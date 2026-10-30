@@ -1,0 +1,81 @@
+// =====================================================================
+// HIL_Sync  -  Sincronizacion PLC <-> Unity, watchdog y reinicio del controlador
+// Version 0.3. Importar como fuente externa y crear una instancia por OB:
+//   "HIL_Sync_PID" (OB32), "HIL_Sync_FUZZY" (OB31), "HIL_Sync_MPC" (OB30).
+//
+// Variables de DB1 "Data" que usa:
+//   2   Metodo_Sync  : Int    (Unity -> PLC)  0 = asincrono, 1 = sincronizado
+//   124 Contador_PLC : DInt   (PLC -> Unity)  +1 por cada ciclo del controlador activo
+//   128 Seq_Unity    : DInt   (Unity -> PLC)  numero de la medicion enviada
+//   132 Eco_Seq      : DInt   (PLC -> Unity)  Seq_Unity con el que se calculo el ciclo
+//   136 Falla_Com    : Bool   (PLC -> Unity)  watchdog (solo modo sincronizado)
+//
+// Reglas:
+//  - Solo el OB del controlador ACTIVO escribe en las variables compartidas.
+//  - Reiniciar = TRUE en la primera llamada y en el primer ciclo inactivo
+//    despues de estar activo (pausa entre repeticiones o cambio de controlador).
+//  - Llamar al INICIO del OB (Inicio := TRUE, antes de leer las PV) y al
+//    FINAL (Inicio := FALSE, despues de escribir Cv_).
+// =====================================================================
+FUNCTION_BLOCK "HIL_Sync"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.3
+   VAR_INPUT
+      Inicio : Bool;                 // TRUE al inicio del OB, FALSE al final
+      Activo : Bool;                 // controlador de este OB activo
+      Metodo_Sync : Int;             // "Data".Metodo_Sync
+      Ciclos_Watchdog : Int := 10;   // 10 ciclos de 100 ms = 1 s sin medicion nueva
+   END_VAR
+   VAR_OUTPUT
+      Ejecutar_Control : Bool;       // llamar al controlador con ssMethodType := 1
+      Reiniciar : Bool;              // llamar con ssMethodType := 0 y poner Cv_ en cero
+   END_VAR
+   VAR_IN_OUT
+      Contador_PLC : DInt;
+      Seq_Unity : DInt;
+      Eco_Seq : DInt;
+      Falla_Com : Bool;
+   END_VAR
+   VAR
+      Seq_Anterior : DInt;
+      Ciclos_Sin_Cambio : Int;
+      Activo_Anterior : Bool;
+      Inicializado : Bool;
+   END_VAR
+
+BEGIN
+   IF #Inicio THEN
+      #Reiniciar := NOT #Activo AND (#Activo_Anterior OR NOT #Inicializado);
+      #Inicializado := TRUE;
+      #Activo_Anterior := #Activo;
+
+      IF #Activo THEN
+         // Copiar Seq_Unity ANTES que las PV: Unity escribe primero las PV y
+         // luego Seq_Unity, asi la PV usada nunca es mas vieja que Eco_Seq.
+         #Eco_Seq := #Seq_Unity;
+
+         IF #Seq_Unity = #Seq_Anterior THEN
+            IF #Ciclos_Sin_Cambio < 32767 THEN
+               #Ciclos_Sin_Cambio := #Ciclos_Sin_Cambio + 1;
+            END_IF;
+         ELSE
+            #Ciclos_Sin_Cambio := 0;
+         END_IF;
+         #Seq_Anterior := #Seq_Unity;
+
+         #Falla_Com := (#Metodo_Sync = 1) AND (#Ciclos_Sin_Cambio >= #Ciclos_Watchdog);
+         #Ejecutar_Control := NOT #Falla_Com;
+      ELSE
+         #Ejecutar_Control := FALSE;
+         #Ciclos_Sin_Cambio := 0;
+         IF #Reiniciar THEN
+            #Falla_Com := FALSE;     // se limpia una sola vez, al desactivarse
+         END_IF;
+      END_IF;
+   ELSE
+      // Final del OB, despues de escribir Cv_: anuncia una accion nueva.
+      IF #Activo THEN
+         #Contador_PLC := #Contador_PLC + 1;
+      END_IF;
+   END_IF;
+END_FUNCTION_BLOCK
