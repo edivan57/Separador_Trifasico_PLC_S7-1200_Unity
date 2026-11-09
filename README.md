@@ -10,14 +10,14 @@ horizontal simulado en Unity, con los controladores ejecutándose en un **PLC Si
 
 | Carpeta | Contenido |
 |---|---|
-| `modelo/matlab/` | Modelo no lineal del separador (`tpsep_v11.m`, `hemivols.m`, `hemivolt.m`, `hemihead.m`), escenario de 1000 s (`Escenario_Trifasico.m`), segundo escenario (`Escenario_Trifasico_2.m`) y punto de operación (`TPSEP_OperatingPoint.mat`) |
-| `modelo/simulink/` | Modelos de Simulink del PI, el Fuzzy y el MPC, e inicialización del Fuzzy (`Fuzzy_init.m`) |
-| `modelo/unity/` | Scripts de C# de Unity: modelo de la planta (`Separador_Trifasico.cs`), comunicación S7 sincronizada con reconexión (`Comunicacion_Sync.cs`) y mapa de DB1 (`DB1Mapa.cs`). `Comunicacion.cs` es una versión anterior, sin sincronización, que no se usó para los resultados |
-| `controladores/fuzzy/` | Base de reglas del Fuzzy (`fis_tpsep_1block.fis`, 147 reglas) |
-| `controladores/mpc/` | Parámetros del MPC (`Parametros_MPC_v8.m`), construcción (`MPC_linealizar_v6_1.m`), sesión de MPC Toolbox (`TPSEP_MPC_v8_.mat`) y verificación del estimador (`verificar_estimador.m`) |
-| `plc/` | Código SCL de los controladores con la instrumentación de tiempo (`RUNTIME`), `HIL_Sync.scl`, `Diag_HIL.scl` y `Medir_OB.scl` (mide el intervalo entre arranques de un OB cíclico; se llama como primera instrucción de OB30, OB31 y OB32, cada uno con su DB de instancia) |
+| `Modelo/Matlab/` | Modelo no lineal del separador (`tpsep_v11.m`, `hemivols.m`, `hemivolt.m`, `hemihead.m`), escenario de 1000 s (`Escenario_Trifasico.m`), segundo escenario (`Escenario_Trifasico_2.m`) y punto de operación (`TPSEP_OperatingPoint.mat`) |
+| `Modelo/Simulink/` | Modelos de Simulink del PI, el Fuzzy y el MPC, e inicialización del Fuzzy (`Fuzzy_init.m`) |
+| `Modelo/Unity/` | Scripts de C# de Unity: modelo de la planta (`Separador_Trifasico.cs`), comunicación S7 sincronizada con reconexión (`Comunicacion_Sync.cs`) y mapa de DB1 (`DB1Mapa.cs`). `Comunicacion.cs` es una versión anterior, sin sincronización, que no se usó para los resultados |
+| `Controladores/Fuzzy/` | Base de reglas del Fuzzy (`fis_tpsep_1block.fis`, 147 reglas) |
+| `Controladores/MPC/` | Parámetros del MPC (`Parametros_MPC_v8.m`), construcción (`MPC_linealizar_v6_1.m`), sesión de MPC Toolbox (`TPSEP_MPC_v8_.mat`) y verificación del estimador (`verificar_estimador.m`) |
+| `PLC/` | Código SCL de los controladores con la instrumentación de tiempo (`RUNTIME`), `HIL_Sync.scl`, `Diag_HIL.scl` y `Medir_OB.scl` (mide el intervalo entre arranques de un OB cíclico; se llama como primera instrucción de OB30, OB31 y OB32, cada uno con su DB de instancia) |
 | `Datos/` | Registros de todas las pruebas del artículo |
-| `analisis/` | `calcular_ob_plc.m` (periodo de los OB medido en el PLC), `contrastar_qp_cotas.m` y `contrastar_qp_cotas_todas.m` (QP del SCL frente a `quadprog`), `generar_figuras_articulo_n.m` (figuras). |
+| `Analisis/` | `calcular_ob_plc.m` (periodo de los OB medido en el PLC), `contrastar_qp_cotas.m` y `contrastar_qp_cotas_todas.m` (QP del SCL frente a `quadprog`), `generar_figuras_articulo_n.m` (figuras). |
 
 
 ## Plataforma
