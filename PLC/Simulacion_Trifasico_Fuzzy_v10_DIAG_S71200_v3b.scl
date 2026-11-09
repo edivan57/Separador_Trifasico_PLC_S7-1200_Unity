@@ -1,0 +1,867 @@
+(*
+ *
+ * File: Simulacion_Trifasico_Fuzzy_v10.scl
+ *
+ * IEC 61131-3 Structured Text (ST) code generated for subsystem "Simulacion_Trifasico_Fuzzy_v10/Fuzzy_"
+ *
+ * Model name                      : Simulacion_Trifasico_Fuzzy_v10
+ * Model version                   : 1.78
+ * Model creator                   : Ivan
+ * Model last modified by          : Ivan
+ * Model last modified on          : Mon Sep 21 14:05:36 2026
+ * Model sample time               : 0.01s
+ * Subsystem name                  : Simulacion_Trifasico_Fuzzy_v10/Fuzzy_
+ * Subsystem sample time           : 0.01s
+ * Simulink PLC Coder version      : 24.1 (R2024a) 19-Nov-2023
+ * ST code generated on            : Mon Sep 21 17:02:42 2026
+ *
+ * Target IDE selection            : Siemens TIA Portal
+ * Test Bench included             : No
+ *
+ * MODIFICADO: instrumentacion de tiempo con RUNTIME (lineas marcadas [DIAG]).
+ *  - Mide solo las ejecuciones en que se calcula la ley de control
+ *    (plc_ts_counter_fuzzy = 0), asi el divisor 1:10 no diluye el promedio.
+ *  - Requiere el DB global Diag_HIL (Diag_HIL.scl) en el proyecto.
+ *  - La ley de control no cambia.
+ *
+ * MODIFICADO para S7-1200 (memoria de trabajo y tiempo). La ley de control no cambia:
+ *  1. c_OutputSamplePoints, c_b y d_d pasan a valores iniciales; se elimina need_init
+ *     (1626 asignaciones). Los puntos de muestreo son iguales en las tres salidas:
+ *     se guardan una vez (101 valores). c_b y d_d pasan de INT a SINT (valores 0..9).
+ *  2. La cache de funciones de pertenencia de salida se calculaba en CADA ejecucion
+ *     (27 llamadas a trimf_o con copias de 101 valores). Ahora se calcula una sola vez y
+ *     guarda 9 x 101 valores, porque las tres salidas comparten funciones y puntos.
+ *  3. En la agregacion se saltan las reglas con activacion 0 (no cambian el resultado).
+ *  4. trimf_o recibe x por referencia; se eliminan tmp_0, tmp_1, d_b y c_c.
+ *  5. Bloques con los nombres del proyecto (sufijo _FUZZY; Fuzzyv -> Fuzzy_Control).
+ *  6. Divisor 1:10 desactivado: la ley se ejecuta en cada llamada del OB31 (100 ms).
+ *     Con el divisor activo y el OB31 a 100 ms, la ley corria cada 1 s.
+ *  8. Version v3 (para bajar la retencion), resultados identicos: solo se calculan las reglas
+ *     activas (a lo sumo 4 por lazo), la agregacion recorre solo los puntos donde cada funcion
+ *     de salida es mayor que 0 y el centroide solo el rango donde la agregacion puede no ser 0.
+ *     Al inicio de cada ciclo solo se ponen en 0 las reglas y los puntos que cambio el ciclo anterior.
+ *  7. Version rapida, resultados identicos: los antecedentes recorren solo las 2
+ *     entradas de cada regla (294 iteraciones en vez de 882), la agregacion solo las
+ *     49 reglas de cada salida (147 en vez de 441) y el centroide suma area y momento
+ *     en una sola pasada.
+ *
+ * [DIAG] Mediciones de RUNTIME <= 0.0 (vuelta del contador interno) se descartan.
+ *)
+DATA_BLOCK PLCGlobalVar_FUZZY
+STRUCT 
+    plc_ts_counter_fuzzy: DINT;
+END_STRUCT
+BEGIN
+END_DATA_BLOCK
+FUNCTION_BLOCK trimf_o_FUZZY
+VAR_INPUT
+    params: ARRAY [0..2] OF REAL;
+END_VAR
+VAR_OUTPUT
+    y: ARRAY [0..100] OF REAL;
+END_VAR
+VAR_IN_OUT
+    x: ARRAY [0..100] OF REAL;   (* solo lectura, por referencia *)
+END_VAR
+VAR
+    a: REAL;
+    b_b: REAL;
+    b_c: REAL;
+    b_i: DINT;
+    x_0: REAL;
+END_VAR
+a := params[0];
+b_b := params[1];
+b_c := params[2];
+FOR b_i := 0 TO 100 DO 
+    y[b_i] := 0.0;
+    IF a <> b_b THEN 
+        x_0 := x[b_i];
+        IF a < x_0 THEN 
+            IF x_0 < b_b THEN 
+                y[b_i] := (1.0 / (b_b - a)) * (x_0 - a);
+            END_IF;
+        END_IF;
+    END_IF;
+    IF b_b <> b_c THEN 
+        x_0 := x[b_i];
+        IF b_b < x_0 THEN 
+            IF x_0 < b_c THEN 
+                y[b_i] := (1.0 / (b_c - b_b)) * (b_c - x_0);
+            END_IF;
+        END_IF;
+    END_IF;
+    IF x[b_i] = b_b THEN 
+        y[b_i] := 1.0;
+    END_IF;
+END_FOR;
+END_FUNCTION_BLOCK
+FUNCTION trapmf_FUZZY: REAL
+VAR_INPUT
+    x: REAL;
+    params: ARRAY [0..3] OF REAL;
+END_VAR
+VAR_TEMP
+    b_x: REAL;
+    b_y: REAL;
+END_VAR
+b_x := 0.0;
+b_y := 0.0;
+IF x >= params[1] THEN 
+    b_x := 1.0;
+END_IF;
+IF x < params[0] THEN 
+    b_x := 0.0;
+END_IF;
+IF params[0] <= x THEN 
+    IF x < params[1] THEN 
+        IF params[0] <> params[1] THEN 
+            b_x := (1.0 / (params[1] - params[0])) * (x - params[0]);
+        END_IF;
+    END_IF;
+END_IF;
+IF x <= params[2] THEN 
+    b_y := 1.0;
+END_IF;
+IF x > params[3] THEN 
+    b_y := 0.0;
+END_IF;
+IF params[2] < x THEN 
+    IF x <= params[3] THEN 
+        IF params[2] <> params[3] THEN 
+            b_y := (1.0 / (params[3] - params[2])) * (params[3] - x);
+        END_IF;
+    END_IF;
+END_IF;
+trapmf_FUZZY := MIN(IN1:=b_x, IN2:=b_y);
+END_FUNCTION
+FUNCTION trimf_FUZZY: REAL
+VAR_INPUT
+    x: REAL;
+    params: ARRAY [0..2] OF REAL;
+END_VAR
+trimf_FUZZY := 0.0;
+IF params[0] <> params[1] THEN 
+    IF params[0] < x THEN 
+        IF x < params[1] THEN 
+            trimf_FUZZY := (1.0 / (params[1] - params[0])) * (x - params[0]);
+        END_IF;
+    END_IF;
+END_IF;
+IF params[1] <> params[2] THEN 
+    IF params[1] < x THEN 
+        IF x < params[2] THEN 
+            trimf_FUZZY := (1.0 / (params[2] - params[1])) * (params[2] - x);
+        END_IF;
+    END_IF;
+END_IF;
+IF x = params[1] THEN 
+    trimf_FUZZY := 1.0;
+END_IF;
+END_FUNCTION
+FUNCTION_BLOCK Fuzzy_Control
+VAR_INPUT
+    ssMethodType: INT;
+    b_ref: ARRAY [0..2] OF REAL;
+    y: ARRAY [0..2] OF REAL;
+END_VAR
+VAR_OUTPUT
+    mv: ARRAY [0..2] OF REAL;
+END_VAR
+VAR
+    c_initialized_not_em: BOOL;
+    d_initialized_not_em: BOOL;
+    cv: ARRAY [0..2] OF REAL;
+    cv_ant: ARRAY [0..2] OF REAL;
+    e_ant: ARRAY [0..2] OF REAL;
+    (* puntos de muestreo de la salida: iguales para las tres salidas *)
+    c_OutputSamplePoints: ARRAY [0..100] OF REAL := [-1.0,-0.98,-0.96,-0.94000000000000006,-0.92,-0.9,-0.88,-0.86,-0.84,-0.82000000000000006,-0.8,-0.78,-0.76,-0.74,-0.72,
+        -0.70000000000000007,-0.68,-0.66,-0.64,-0.62,-0.6,-0.58,-0.56,-0.54,-0.52,-0.5,-0.48,-0.46,-0.44,-0.42,-0.4,-0.38,
+        -0.36,-0.34,-0.32,-0.3,-0.28,-0.26,-0.24,-0.22,-0.2,-0.18,-0.16,-0.14,-0.12,-0.1,-0.08,-0.06,-0.04,-0.02,0.0,0.02,
+        0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.32,0.34,0.36,0.38,0.4,0.42,0.44,0.46,0.48,0.5,
+        0.52,0.54,0.56,0.58,0.6,0.62,0.64,0.66,0.68,0.70000000000000007,0.72,0.74,0.76,0.78,0.8,0.82000000000000006,0.84,0.86,
+        0.88,0.9,0.92,0.94000000000000006,0.96,0.98,1.0];
+    f: ARRAY [0..3] OF REAL := [-1.0,-1.0,-0.9,-0.6];
+    b_e: ARRAY [0..2] OF REAL := [-0.9,-0.6,-0.3];
+    c_d: ARRAY [0..2] OF REAL := [0.3,0.6,0.9];
+    b_c: ARRAY [0..3] OF REAL := [0.6,0.9,1.0,1.0];
+    c_b: ARRAY [0..881] OF SINT := [1,1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,3,3,3,3,3,4,4,4,4,4,4,4,5,5,5,5,5,5,5,6,6,6,6,6,6,6,7,7,7,7,7,7,7,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,1,2,3,4,5,6,7,1,2,3,4,5,6,7,1,2,3,4,5,6,7,1,2,
+        3,4,5,6,7,1,2,3,4,5,6,7,1,2,3,4,5,6,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,2,2,2,2,
+        2,2,2,3,3,3,3,3,3,3,4,4,4,4,4,4,4,5,5,5,5,5,5,5,6,6,6,6,6,6,6,7,7,7,7,7,7,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,1,2,3,4,5,6,7,1,2,3,4,5,6,7,1,2,3,4,5,6,7,1,2,3,4,5,6,7,1,2,3,4,5,6,
+        7,1,2,3,4,5,6,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,3,3,3,3,3,4,
+        4,4,4,4,4,4,5,5,5,5,5,5,5,6,6,6,6,6,6,6,7,7,7,7,7,7,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,1,2,3,4,5,6,7,1,2,3,4,5,6,7,1,2,3,4,5,6,7,1,2,3,4,5,6,7,1,2,3,4,5,6,7,1,2,3,4,5,6,7,1,2,3,4,5,6,7];
+    d_d: ARRAY [0..440] OF SINT := [1,1,1,2,3,4,5,1,1,2,3,4,5,6,1,2,3,4,5,6,7,2,3,4,5,6,7,8,3,4,5,6,7,8,9,4,5,6,7,8,9,9,5,6,7,8,9,9,9,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,2,3,4,5,1,1,2,3,4,5,6,1,2,3,4,5,6,7,2,3,4,5,6,7,8,3,4,5,6,7,8,9,4,5,6,7,8,
+        9,9,5,6,7,8,9,9,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,2,3,4,5,1,1,2,3,4,5,6,1,2,3,4,5,6,7,
+        2,3,4,5,6,7,8,3,4,5,6,7,8,9,4,5,6,7,8,9,9,5,6,7,8,9,9,9];
+    (* parametros [a b c] de las 9 funciones triangulares de salida, en orden NGG..PGG *)
+    MFsal: ARRAY [0..26] OF REAL := [-1.0,-1.0,-0.75,-1.0,-0.75,-0.5,-0.75,-0.5,-0.25,-0.5,-0.25,0.0,-0.25,0.0,0.25,
+        0.0,0.25,0.5,0.25,0.5,0.75,0.5,0.75,1.0,0.75,1.0,1.0];
+    cacheMF_ok: BOOL := FALSE;
+    mfID: DINT;
+    MFini: ARRAY [0..8] OF DINT;    (* primer punto con valor > 0 de cada funcion de salida *)
+    MFfin: ARRAY [0..8] OF DINT;    (* ultimo punto con valor > 0 de cada funcion de salida *)
+    actRule: ARRAY [0..146] OF DINT;   (* reglas activas del ciclo, en orden creciente *)
+    nAct: DINT;
+    kAct: DINT;
+    lazo: DINT;
+    iMF: DINT;
+    jMF: DINT;
+    aggIni: ARRAY [0..2] OF DINT;   (* rango de puntos con agregacion posible por salida *)
+    aggFin: ARRAY [0..2] OF DINT;
+    i0_trimf_o: trimf_o_FUZZY;
+    b_d: REAL;
+    inputMFCache: ARRAY [0..41] OF REAL;
+    inputID: DINT;
+    mfVal: REAL;
+    outputMFCache: ARRAY [0..908] OF REAL;   (* 9 funciones x 101 puntos *)
+    sampleID: DINT;
+    area: REAL;
+    c_rtb_antecedentOutp: ARRAY [0..146] OF REAL;
+    c_rtb_aggregatedOutp: ARRAY [0..302] OF REAL;
+    c_rtb_defuzzifiedOut: ARRAY [0..2] OF REAL;
+    ruleID: DINT;
+    tmp: ARRAY [0..2] OF REAL;
+    b_i: DINT;
+    b_b: INT;
+    e: REAL;
+    e_idx_0: REAL;
+    de_idx_0: REAL;
+    e_idx_1: REAL;
+    rtb_xin_idx_2: REAL;
+    de_idx_1: REAL;
+    rtb_xin_idx_3: REAL;
+    rtb_xin_idx_4: REAL;
+    de_idx_2: REAL;
+    rtb_xin_idx_5: REAL;
+    d_rtb_aggregatedOutp: DINT;
+END_VAR
+CASE ssMethodType OF
+    0: 
+        PLCGlobalVar_FUZZY.plc_ts_counter_fuzzy := 0;
+        (* SystemInitialize for Atomic SubSystem: '<Root>/Fuzzy_' *)
+        (* SystemInitialize for MATLAB Function: '<S1>/MATLAB Function8' *)
+        c_initialized_not_em := FALSE;
+        (* SystemInitialize for MATLAB Function: '<S1>/MATLAB Function7' *)
+        d_initialized_not_em := FALSE;
+        (* End of SystemInitialize for SubSystem: '<Root>/Fuzzy_' *)
+    1: 
+        IF PLCGlobalVar_FUZZY.plc_ts_counter_fuzzy = 0 THEN 
+            (* [DIAG] inicio de la medicion *)
+            "Diag_HIL".fuzzy_aux := RUNTIME("Diag_HIL".fuzzy_mem);
+            
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* MATLAB Function: '<S1>/MATLAB Function8' *)
+            (* Preprocesamiento del controlador fuzzy MIMO (replica main_Fuzzy_2.m). *)
+            
+            (* ref = [hw_sp; hb_sp; pg_sp]    y = [hw; hb; pg] *)
+            (* xin = [e_hw; de_hw; e_hb; de_hb; e_pg; de_pg]  -> FIS de 6 entradas *)
+            
+            (* Puerto reset: 0 = operacion normal, distinto de 0 = reinicia estados. *)
+            (* MATLAB Function 'Fuzzy_/MATLAB Function8': '<S4>:1' *)
+            (* ---------------- Escalas de entrada al FIS ---------------- *)
+            (* hw     hb     pg *)
+            (* '<S4>:1:12' Ke  = [  0.30;  0.60;  0.09]; *)
+            (* escala del error *)
+            (* '<S4>:1:13' Kde = [ 22.00; 12.00;  3.00]; *)
+            (* escala de la derivada *)
+            (* NOTA: en el lazo de gas Kde/Ke = 100, asi que el canal derivativo pesa *)
+            (* mas que el del error (medido: 1.4x durante los transitorios). Es la *)
+            (* entrada mas sensible al periodo real de ejecucion. Si reaparece el *)
+            (* chattering de vpg, bajar Kde(3) de 6.0 a 2.0 es la correccion de fondo. *)
+            (* ---------------- Estados persistentes ---------------- *)
+            (* '<S4>:1:23' if isempty(initialized) || reset ~= 0 *)
+            IF  NOT c_initialized_not_em THEN 
+                (* '<S4>:1:24' e_ant = zeros(3,1); *)
+                e_ant[0] := 0.0;
+                e_ant[1] := 0.0;
+                e_ant[2] := 0.0;
+                (* '<S4>:1:25' initialized = true; *)
+                c_initialized_not_em := TRUE;
+            END_IF;
+            (* ---------------- Error (PV - SP) ---------------- *)
+            (* '<S4>:1:29' e = y(:) - ref(:); *)
+            (* ---------------- Derivada discreta (por muestra) ---------------- *)
+            (* '<S4>:1:32' de    = e - e_ant; *)
+            (* '<S4>:1:33' e_ant = e; *)
+            e := y[0] - b_ref[0];
+            e_idx_0 := e;
+            de_idx_0 := e - e_ant[0];
+            e_ant[0] := e;
+            e := y[1] - b_ref[1];
+            e_idx_1 := e;
+            de_idx_1 := e - e_ant[1];
+            e_ant[1] := e;
+            e := y[2] - b_ref[2];
+            de_idx_2 := e - e_ant[2];
+            e_ant[2] := e;
+            (* ---------------- Escalamiento ---------------- *)
+            (* '<S4>:1:36' xin = zeros(6,1); *)
+            (* '<S4>:1:37' xin(1) = e(1)*Ke(1); *)
+            mfVal := e_idx_0 * 0.3;
+            (* '<S4>:1:37' xin(2) = de(1)*Kde(1); *)
+            area := de_idx_0 * 22.0;
+            (* '<S4>:1:38' xin(3) = e(2)*Ke(2); *)
+            rtb_xin_idx_2 := e_idx_1 * 0.6;
+            (* '<S4>:1:38' xin(4) = de(2)*Kde(2); *)
+            rtb_xin_idx_3 := de_idx_1 * 12.0;
+            (* '<S4>:1:39' xin(5) = e(3)*Ke(3); *)
+            rtb_xin_idx_4 := e * 0.09;
+            (* '<S4>:1:39' xin(6) = de(3)*Kde(3); *)
+            rtb_xin_idx_5 := de_idx_2 * 3.0;
+            (* End of MATLAB Function: '<S1>/MATLAB Function8' *)
+            
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            (* ---------------- Saturacion de las entradas del FIS ---------------- *)
+            (* DESACTIVADA para replicar el script: evalfis no satura, y si una entrada *)
+            (* sale de [-1,1] ninguna MF dispara y el FIS devuelve el punto medio (0). *)
+            (* El bloque Fuzzy Logic Controller y su codigo generado hacen lo mismo. *)
+            (* '<S4>:1:45' SAT_XIN = false; *)
+            (* '<S4>:1:47' if SAT_XIN *)
+            (* MATLAB Function 'Evaluate Rule Antecedents': '<S6>:1' *)
+            (* '<S6>:1:4' if SimulateUsing==1 && coder.internal.canUseExtrinsic ... *)
+            (* '<S6>:1:5'         && (isa(inputs,'double') || isa(inputs,'single')) *)
+            (* '<S6>:1:32' else *)
+            (* '<S6>:1:33' if fis.inputFuzzySetType==1 *)
+            (* '<S6>:1:34' [antecedentOutputs,sumAntecedentOutputs] = ... *)
+            (* '<S6>:1:35'             fuzzy.internal.codegen.evaluateRuleAntecedent(... *)
+            (* '<S6>:1:36'             inputs,fis,diagnostics); *)
+            e := 0.0;
+            inputMFCache[0] := trapmf_FUZZY(x := mfVal, params := f);
+            inputMFCache[1] := trimf_FUZZY(x := mfVal, params := b_e);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := -0.6;
+            tmp[1] := -0.3;
+            tmp[2] := 0.0;
+            inputMFCache[2] := trimf_FUZZY(x := mfVal, params := tmp);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := -0.3;
+            tmp[1] := 0.0;
+            tmp[2] := 0.3;
+            inputMFCache[3] := trimf_FUZZY(x := mfVal, params := tmp);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := 0.0;
+            tmp[1] := 0.3;
+            tmp[2] := 0.6;
+            inputMFCache[4] := trimf_FUZZY(x := mfVal, params := tmp);
+            inputMFCache[5] := trimf_FUZZY(x := mfVal, params := c_d);
+            inputMFCache[6] := trapmf_FUZZY(x := mfVal, params := b_c);
+            inputMFCache[7] := trapmf_FUZZY(x := area, params := f);
+            inputMFCache[8] := trimf_FUZZY(x := area, params := b_e);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := -0.6;
+            tmp[1] := -0.3;
+            tmp[2] := 0.0;
+            inputMFCache[9] := trimf_FUZZY(x := area, params := tmp);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := -0.3;
+            tmp[1] := 0.0;
+            tmp[2] := 0.3;
+            inputMFCache[10] := trimf_FUZZY(x := area, params := tmp);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := 0.0;
+            tmp[1] := 0.3;
+            tmp[2] := 0.6;
+            inputMFCache[11] := trimf_FUZZY(x := area, params := tmp);
+            inputMFCache[12] := trimf_FUZZY(x := area, params := c_d);
+            inputMFCache[13] := trapmf_FUZZY(x := area, params := b_c);
+            inputMFCache[14] := trapmf_FUZZY(x := rtb_xin_idx_2, params := f);
+            inputMFCache[15] := trimf_FUZZY(x := rtb_xin_idx_2, params := b_e);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := -0.6;
+            tmp[1] := -0.3;
+            tmp[2] := 0.0;
+            inputMFCache[16] := trimf_FUZZY(x := rtb_xin_idx_2, params := tmp);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := -0.3;
+            tmp[1] := 0.0;
+            tmp[2] := 0.3;
+            inputMFCache[17] := trimf_FUZZY(x := rtb_xin_idx_2, params := tmp);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := 0.0;
+            tmp[1] := 0.3;
+            tmp[2] := 0.6;
+            inputMFCache[18] := trimf_FUZZY(x := rtb_xin_idx_2, params := tmp);
+            inputMFCache[19] := trimf_FUZZY(x := rtb_xin_idx_2, params := c_d);
+            inputMFCache[20] := trapmf_FUZZY(x := rtb_xin_idx_2, params := b_c);
+            inputMFCache[21] := trapmf_FUZZY(x := rtb_xin_idx_3, params := f);
+            inputMFCache[22] := trimf_FUZZY(x := rtb_xin_idx_3, params := b_e);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := -0.6;
+            tmp[1] := -0.3;
+            tmp[2] := 0.0;
+            inputMFCache[23] := trimf_FUZZY(x := rtb_xin_idx_3, params := tmp);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := -0.3;
+            tmp[1] := 0.0;
+            tmp[2] := 0.3;
+            inputMFCache[24] := trimf_FUZZY(x := rtb_xin_idx_3, params := tmp);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := 0.0;
+            tmp[1] := 0.3;
+            tmp[2] := 0.6;
+            inputMFCache[25] := trimf_FUZZY(x := rtb_xin_idx_3, params := tmp);
+            inputMFCache[26] := trimf_FUZZY(x := rtb_xin_idx_3, params := c_d);
+            inputMFCache[27] := trapmf_FUZZY(x := rtb_xin_idx_3, params := b_c);
+            inputMFCache[28] := trapmf_FUZZY(x := rtb_xin_idx_4, params := f);
+            inputMFCache[29] := trimf_FUZZY(x := rtb_xin_idx_4, params := b_e);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := -0.6;
+            tmp[1] := -0.3;
+            tmp[2] := 0.0;
+            inputMFCache[30] := trimf_FUZZY(x := rtb_xin_idx_4, params := tmp);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := -0.3;
+            tmp[1] := 0.0;
+            tmp[2] := 0.3;
+            inputMFCache[31] := trimf_FUZZY(x := rtb_xin_idx_4, params := tmp);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := 0.0;
+            tmp[1] := 0.3;
+            tmp[2] := 0.6;
+            inputMFCache[32] := trimf_FUZZY(x := rtb_xin_idx_4, params := tmp);
+            inputMFCache[33] := trimf_FUZZY(x := rtb_xin_idx_4, params := c_d);
+            inputMFCache[34] := trapmf_FUZZY(x := rtb_xin_idx_4, params := b_c);
+            inputMFCache[35] := trapmf_FUZZY(x := rtb_xin_idx_5, params := f);
+            inputMFCache[36] := trimf_FUZZY(x := rtb_xin_idx_5, params := b_e);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := -0.6;
+            tmp[1] := -0.3;
+            tmp[2] := 0.0;
+            inputMFCache[37] := trimf_FUZZY(x := rtb_xin_idx_5, params := tmp);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := -0.3;
+            tmp[1] := 0.0;
+            tmp[2] := 0.3;
+            inputMFCache[38] := trimf_FUZZY(x := rtb_xin_idx_5, params := tmp);
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            tmp[0] := 0.0;
+            tmp[1] := 0.3;
+            tmp[2] := 0.6;
+            inputMFCache[39] := trimf_FUZZY(x := rtb_xin_idx_5, params := tmp);
+            inputMFCache[40] := trimf_FUZZY(x := rtb_xin_idx_5, params := c_d);
+            inputMFCache[41] := trapmf_FUZZY(x := rtb_xin_idx_5, params := b_c);
+            (* Antecedentes. Cada entrada tiene a lo sumo 2 funciones de pertenencia distintas de cero,
+               asi que hay a lo sumo 4 reglas activas por lazo: la regla 49*lazo + 7*(i-1) + (j-1) usa la
+               funcion i del error y la j de su variacion. Solo esas se calculan, con la misma secuencia
+               de minimos del original; las demas valen 0.0, que es lo que da el original para ellas. *)
+            (* Solo se ponen en 0 las reglas que quedaron activas en el ciclo anterior; las demas ya valen 0 *)
+            FOR kAct := 0 TO nAct - 1 DO 
+                c_rtb_antecedentOutp[actRule[kAct]] := 0.0;
+            END_FOR;
+            nAct := 0;
+            FOR lazo := 0 TO 2 DO 
+                FOR iMF := 1 TO 7 DO 
+                    IF inputMFCache[((7 * (2 * lazo)) + iMF) - 1] <> 0.0 THEN 
+                        FOR jMF := 1 TO 7 DO 
+                            IF inputMFCache[((7 * ((2 * lazo) + 1)) + jMF) - 1] <> 0.0 THEN 
+                                ruleID := ((49 * lazo) + (7 * (iMF - 1))) + (jMF - 1);
+                                c_rtb_antecedentOutp[ruleID] := 1.0;
+                                area := inputMFCache[((7 * (2 * lazo)) + iMF) - 1];
+                                IF c_rtb_antecedentOutp[ruleID] > area THEN 
+                                    c_rtb_antecedentOutp[ruleID] := area;
+                                END_IF;
+                                area := inputMFCache[((7 * ((2 * lazo) + 1)) + jMF) - 1];
+                                IF c_rtb_antecedentOutp[ruleID] > area THEN 
+                                    c_rtb_antecedentOutp[ruleID] := area;
+                                END_IF;
+                                actRule[nAct] := ruleID;
+                                nAct := nAct + 1;
+                            END_IF;
+                        END_FOR;
+                    END_IF;
+                END_FOR;
+            END_FOR;
+            (* Suma de activaciones en orden creciente de regla; las reglas inactivas suman 0.0 *)
+            FOR kAct := 0 TO nAct - 1 DO 
+                e := e + c_rtb_antecedentOutp[actRule[kAct]];
+            END_FOR;
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* MATLAB Function 'Evaluate Rule Consequents': '<S7>:1' *)
+            (* '<S7>:1:4' if SimulateUsing==1 && coder.internal.canUseExtrinsic ... *)
+            (* '<S7>:1:5'         && (isa(inputs,'double') || isa(inputs,'single')) *)
+            (* '<S7>:1:55' else *)
+            (* '<S7>:1:56' if fis.inputFuzzySetType==1 *)
+            (* '<S7>:1:57' if strcmp(char(fis.type),'mamdani') *)
+            (* '<S7>:1:58' aggregatedOutputs = ... *)
+            (* '<S7>:1:59'                 fuzzy.internal.codegen.evaluateRuleConsequentForMamdaniFIS(... *)
+            (* '<S7>:1:60'                 antecedentOutputs,fis,samplePoints); *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Consequents' *)
+            (* Solo los rangos que la agregacion pudo cambiar en el ciclo anterior; el resto ya vale 0 *)
+            FOR inputID := 0 TO 2 DO 
+                FOR sampleID := aggIni[inputID] TO aggFin[inputID] DO 
+                    c_rtb_aggregatedOutp[(101 * inputID) + sampleID] := 0.0;
+                END_FOR;
+            END_FOR;
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* Outputs for Atomic SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            (* MATLAB Function: '<S2>/Evaluate Rule Consequents' incorporates:
+             *  Constant: '<S2>/Output Sample Points' *)
+            (* Funciones de pertenencia de salida evaluadas en los 101 puntos. Dependen solo de
+               constantes y las tres salidas comparten funciones y puntos: se calculan una vez
+               (9 x 101 valores) con el mismo trimf_o_FUZZY y los mismos operandos que el original. *)
+            IF NOT cacheMF_ok THEN 
+                FOR mfID := 0 TO 8 DO 
+                    tmp[0] := MFsal[3 * mfID];
+                    tmp[1] := MFsal[(3 * mfID) + 1];
+                    tmp[2] := MFsal[(3 * mfID) + 2];
+                    i0_trimf_o(x := c_OutputSamplePoints, params := tmp);
+                    FOR b_i := 0 TO 100 DO 
+                        outputMFCache[(9 * b_i) + mfID] := i0_trimf_o.y[b_i];
+                    END_FOR;
+                    (* Rango de puntos donde la funcion es mayor que 0; fuera de el la regla no aporta nada *)
+                    MFini[mfID] := 101;
+                    MFfin[mfID] := -1;
+                    FOR b_i := 0 TO 100 DO 
+                        IF outputMFCache[(9 * b_i) + mfID] > 0.0 THEN 
+                            IF b_i < MFini[mfID] THEN 
+                                MFini[mfID] := b_i;
+                            END_IF;
+                            MFfin[mfID] := b_i;
+                        END_IF;
+                    END_FOR;
+                END_FOR;
+                cacheMF_ok := TRUE;
+            END_IF;
+            (* Agregacion: solo las reglas activas (la regla r alimenta la salida r DIV 49) y, en cada
+               una, solo los puntos donde su funcion de salida es mayor que 0. En los demas puntos el
+               minimo vale 0 y no cambia el maximo, que parte de 0. *)
+            FOR inputID := 0 TO 2 DO 
+                aggIni[inputID] := 101;
+                aggFin[inputID] := -1;
+            END_FOR;
+            FOR kAct := 0 TO nAct - 1 DO 
+                ruleID := actRule[kAct];
+                inputID := ruleID / 49;
+                b_i := SINT_TO_DINT(d_d[(147 * inputID) + ruleID]);
+                IF b_i <> 0 THEN 
+                    area := c_rtb_antecedentOutp[ruleID];
+                    IF area <> 0.0 THEN 
+                        FOR sampleID := MFini[b_i - 1] TO MFfin[b_i - 1] DO 
+                            mfVal := outputMFCache[(b_i - 1) + (9 * sampleID)];
+                            IF mfVal > area THEN 
+                                mfVal := area;
+                            END_IF;
+                            d_rtb_aggregatedOutp := (101 * inputID) + sampleID;
+                            IF c_rtb_aggregatedOutp[d_rtb_aggregatedOutp] < mfVal THEN 
+                                c_rtb_aggregatedOutp[d_rtb_aggregatedOutp] := mfVal;
+                            END_IF;
+                        END_FOR;
+                        IF MFini[b_i - 1] < aggIni[inputID] THEN 
+                            aggIni[inputID] := MFini[b_i - 1];
+                        END_IF;
+                        IF MFfin[b_i - 1] > aggFin[inputID] THEN 
+                            aggFin[inputID] := MFfin[b_i - 1];
+                        END_IF;
+                    END_IF;
+                END_IF;
+            END_FOR;
+            (* MATLAB Function: '<S2>/Defuzzify Outputs' incorporates:
+             *  Constant: '<S2>/Output Sample Points'
+             *  MATLAB Function: '<S2>/Evaluate Rule Antecedents' *)
+            (* MATLAB Function 'Defuzzify Outputs': '<S5>:1' *)
+            (* '<S5>:1:4' if SimulateUsing==1 && coder.internal.canUseExtrinsic ... *)
+            (* '<S5>:1:5'         && (isa(aggregatedOutputs,'double') || isa(aggregatedOutputs,'single')) *)
+            (* '<S5>:1:63' else *)
+            (* '<S5>:1:64' if fis.inputFuzzySetType==1 *)
+            (* '<S5>:1:65' if isequal(fis.type,uint8('mamdani')) *)
+            (* '<S5>:1:66' defuzzifiedOutputs = ... *)
+            (* '<S5>:1:67'                 fuzzy.internal.codegen.applyMamdaniDefuzzificationMethod(... *)
+            (* '<S5>:1:68'                 samplePoints,sumAntecedentOutputs,aggregatedOutputs, ... *)
+            (* '<S5>:1:69'                 fis,diagnostics); *)
+            IF e = 0.0 THEN 
+                c_rtb_defuzzifiedOut[0] := 0.0;
+                c_rtb_defuzzifiedOut[1] := 0.0;
+                c_rtb_defuzzifiedOut[2] := 0.0;
+            ELSE 
+                FOR inputID := 0 TO 2 DO 
+                    mfVal := 0.0;
+                    area := 0.0;
+                    (* Area y momento en una sola pasada y solo donde la agregacion puede ser > 0;
+                       fuera de ese rango vale 0 y sumar 0 no cambia ninguna de las dos sumas *)
+                    FOR ruleID := aggIni[inputID] TO aggFin[inputID] DO 
+                        area := c_rtb_aggregatedOutp[(101 * inputID) + ruleID] + area;
+                        mfVal := (c_OutputSamplePoints[ruleID] * c_rtb_aggregatedOutp[(101 * inputID)
+                             + ruleID]) + mfVal;
+                    END_FOR;
+                    IF area = 0.0 THEN 
+                        c_rtb_defuzzifiedOut[inputID] := (c_OutputSamplePoints[100] + c_OutputSamplePoints[0])
+                             / 2.0;
+                    ELSE 
+                        c_rtb_defuzzifiedOut[inputID] := (1.0 / area) * mfVal;
+                    END_IF;
+                END_FOR;
+            END_IF;
+            (* End of MATLAB Function: '<S2>/Defuzzify Outputs' *)
+            (* End of Outputs for SubSystem: '<S1>/Fuzzy Logic  Controller' *)
+            
+            (* MATLAB Function: '<S1>/MATLAB Function7' *)
+            (* Convierte las 3 salidas del FIS en aperturas de valvula. *)
+            
+            (* u_fis = [u_vpw; u_vpc; u_vpg]   (salida del FIS, rango [-1,1]) *)
+            (* mv    = [vpw;   vpc;   vpg  ]   saturadas en [0.01, 0.99] *)
+            
+            (* Debe ejecutarse a Ts = 0.1 s (subsistema Fuzzy_ con Sample time = 0.1). *)
+            
+            (* MATLAB Function 'Fuzzy_/MATLAB Function7': '<S3>:1' *)
+            (* ---------------- Ganancias de integracion ---------------- *)
+            (* Valor original del script: Kcv = [1.5; 1.5; 1.5] *)
+            (* '<S3>:1:13' Kcv = [4.0; 2.5; 2.25]; *)
+            (* por muestra de 0.1 s *)
+            (* ---------------- Limites de la apertura ---------------- *)
+            (* '<S3>:1:16' MV_MIN = 0.01; *)
+            (* '<S3>:1:17' MV_MAX = 0.99; *)
+            (* '<S3>:1:19' cv0 = [MV_MIN; MV_MIN; MV_MIN]; *)
+            (* arranque desde el minimo, como el script *)
+            (* ---------------- Limitador de velocidad (opcional) ---------------- *)
+            (* Desactivado por defecto para no alterar la respuesta validada. *)
+            (* Poner en true si reaparece el chattering de vpg: recorta los saltos *)
+            (* grandes (se midieron incrementos de hasta 0.154 en una sola ejecucion) *)
+            (* sin afectar la dinamica lenta, cuyo percentil 99 es 0.0159. *)
+            (* '<S3>:1:26' RATE_ENABLE = true; *)
+            (* '<S3>:1:27' RATE_MAX    = [0.10; 0.10; 0.03]; *)
+            (* por muestra de 0.1 s *)
+            (* ---------------- Estados persistentes ---------------- *)
+            (* '<S3>:1:32' if isempty(initialized) || reset ~= 0 *)
+            IF  NOT d_initialized_not_em THEN 
+                (* '<S3>:1:33' cv     = cv0; *)
+                (* '<S3>:1:34' cv_ant = cv0; *)
+                cv[0] := 0.01;
+                cv_ant[0] := 0.01;
+                cv[1] := 0.01;
+                cv_ant[1] := 0.01;
+                cv[2] := 0.01;
+                cv_ant[2] := 0.01;
+                (* '<S3>:1:35' initialized = true; *)
+                d_initialized_not_em := TRUE;
+            END_IF;
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            (* ---------------- Integracion del mando difuso ---------------- *)
+            (* '<S3>:1:39' cv = cv + Kcv .* u_fis(:); *)
+            (* Anti-windup: el acumulador se limita al mismo rango que la apertura *)
+            (* '<S3>:1:42' for i = 1:3 *)
+            (* ---------------- Limitador de velocidad ---------------- *)
+            (* '<S3>:1:51' if RATE_ENABLE *)
+            (* '<S3>:1:52' for i = 1:3 *)
+            (* '<S3>:1:62' cv_ant = cv; *)
+            (* ---------------- Salida ---------------- *)
+            (* '<S3>:1:65' mv = cv; *)
+            (* Outputs for Atomic SubSystem: '<Root>/Fuzzy_' *)
+            (* MATLAB Function: '<S1>/MATLAB Function7' *)
+            mfVal := (4.0 * c_rtb_defuzzifiedOut[0]) + cv[0];
+            cv[0] := mfVal;
+            (* '<S3>:1:43' if cv(i) > MV_MAX *)
+            IF mfVal > 0.99 THEN 
+                (* '<S3>:1:44' cv(i) = MV_MAX; *)
+                mfVal := 0.99;
+                cv[0] := 0.99;
+            ELSIF mfVal < 0.01 THEN 
+                (* '<S3>:1:45' elseif cv(i) < MV_MIN *)
+                (* '<S3>:1:46' cv(i) = MV_MIN; *)
+                mfVal := 0.01;
+                cv[0] := 0.01;
+            END_IF;
+            (* '<S3>:1:53' d = cv(i) - cv_ant(i); *)
+            b_d := mfVal - cv_ant[0];
+            (* '<S3>:1:54' if d > RATE_MAX(i) *)
+            IF b_d > 0.1 THEN 
+                (* '<S3>:1:55' cv(i) = cv_ant(i) + RATE_MAX(i); *)
+                mfVal := cv_ant[0] + 0.1;
+                cv[0] := cv_ant[0] + 0.1;
+            ELSIF b_d < -0.1 THEN 
+                (* '<S3>:1:56' elseif d < -RATE_MAX(i) *)
+                (* '<S3>:1:57' cv(i) = cv_ant(i) - RATE_MAX(i); *)
+                mfVal := cv_ant[0] - 0.1;
+                cv[0] := cv_ant[0] - 0.1;
+            END_IF;
+            cv_ant[0] := mfVal;
+            (* Outport: '<Root>/mv' incorporates:
+             *  MATLAB Function: '<S1>/MATLAB Function7' *)
+            mv[0] := mfVal;
+            (* MATLAB Function: '<S1>/MATLAB Function7' *)
+            mfVal := (2.5 * c_rtb_defuzzifiedOut[1]) + cv[1];
+            cv[1] := mfVal;
+            (* '<S3>:1:43' if cv(i) > MV_MAX *)
+            IF mfVal > 0.99 THEN 
+                (* '<S3>:1:44' cv(i) = MV_MAX; *)
+                mfVal := 0.99;
+                cv[1] := 0.99;
+            ELSIF mfVal < 0.01 THEN 
+                (* '<S3>:1:45' elseif cv(i) < MV_MIN *)
+                (* '<S3>:1:46' cv(i) = MV_MIN; *)
+                mfVal := 0.01;
+                cv[1] := 0.01;
+            END_IF;
+            (* '<S3>:1:53' d = cv(i) - cv_ant(i); *)
+            b_d := mfVal - cv_ant[1];
+            (* '<S3>:1:54' if d > RATE_MAX(i) *)
+            IF b_d > 0.1 THEN 
+                (* '<S3>:1:55' cv(i) = cv_ant(i) + RATE_MAX(i); *)
+                mfVal := cv_ant[1] + 0.1;
+                cv[1] := cv_ant[1] + 0.1;
+            ELSIF b_d < -0.1 THEN 
+                (* '<S3>:1:56' elseif d < -RATE_MAX(i) *)
+                (* '<S3>:1:57' cv(i) = cv_ant(i) - RATE_MAX(i); *)
+                mfVal := cv_ant[1] - 0.1;
+                cv[1] := cv_ant[1] - 0.1;
+            END_IF;
+            cv_ant[1] := mfVal;
+            (* Outport: '<Root>/mv' incorporates:
+             *  MATLAB Function: '<S1>/MATLAB Function7' *)
+            mv[1] := mfVal;
+            (* MATLAB Function: '<S1>/MATLAB Function7' *)
+            mfVal := (2.25 * c_rtb_defuzzifiedOut[2]) + cv[2];
+            cv[2] := mfVal;
+            (* '<S3>:1:43' if cv(i) > MV_MAX *)
+            IF mfVal > 0.99 THEN 
+                (* '<S3>:1:44' cv(i) = MV_MAX; *)
+                mfVal := 0.99;
+                cv[2] := 0.99;
+            ELSIF mfVal < 0.01 THEN 
+                (* '<S3>:1:45' elseif cv(i) < MV_MIN *)
+                (* '<S3>:1:46' cv(i) = MV_MIN; *)
+                mfVal := 0.01;
+                cv[2] := 0.01;
+            END_IF;
+            (* '<S3>:1:53' d = cv(i) - cv_ant(i); *)
+            b_d := mfVal - cv_ant[2];
+            (* '<S3>:1:54' if d > RATE_MAX(i) *)
+            IF b_d > 0.03 THEN 
+                (* '<S3>:1:55' cv(i) = cv_ant(i) + RATE_MAX(i); *)
+                mfVal := cv_ant[2] + 0.03;
+                cv[2] := cv_ant[2] + 0.03;
+            ELSIF b_d < -0.03 THEN 
+                (* '<S3>:1:56' elseif d < -RATE_MAX(i) *)
+                (* '<S3>:1:57' cv(i) = cv_ant(i) - RATE_MAX(i); *)
+                mfVal := cv_ant[2] - 0.03;
+                cv[2] := cv_ant[2] - 0.03;
+            END_IF;
+            cv_ant[2] := mfVal;
+            (* Outport: '<Root>/mv' incorporates:
+             *  MATLAB Function: '<S1>/MATLAB Function7' *)
+            mv[2] := mfVal;
+            (* End of Outputs for SubSystem: '<Root>/Fuzzy_' *)
+            
+            (* [DIAG] fin de la medicion: tiempo de esta ejecucion en ms *)
+            "Diag_HIL".fuzzy_ms := RUNTIME("Diag_HIL".fuzzy_mem) * 1000.0;
+            
+            (* [DIAG] reinicio de estadisticas desde la tabla de observacion *)
+            IF "Diag_HIL".fuzzy_reset THEN
+                "Diag_HIL".fuzzy_n := 0;
+                "Diag_HIL".fuzzy_sum_ms := 0.0;
+                "Diag_HIL".fuzzy_max_ms := 0.0;
+                "Diag_HIL".fuzzy_reset := FALSE;
+            END_IF;
+            
+            (* [DIAG] promedio y maximo desde el ultimo reset *)
+            (* [DIAG] Si el contador interno de RUNTIME da la vuelta, la medicion sale <= 0.0 y
+               Siemens indica descartarla: solo se acumulan mediciones positivas. *)
+            IF "Diag_HIL".fuzzy_ms > 0.0 THEN
+                "Diag_HIL".fuzzy_n := "Diag_HIL".fuzzy_n + 1;
+                "Diag_HIL".fuzzy_sum_ms := "Diag_HIL".fuzzy_sum_ms + "Diag_HIL".fuzzy_ms;
+                "Diag_HIL".fuzzy_prom_ms := "Diag_HIL".fuzzy_sum_ms / DINT_TO_LREAL("Diag_HIL".fuzzy_n);
+                "Diag_HIL".fuzzy_max_ms := MAX(IN1 := "Diag_HIL".fuzzy_max_ms, IN2 := "Diag_HIL".fuzzy_ms);
+            END_IF;
+        END_IF;
+        (* Divisor 1:10 de PLC Coder DESACTIVADO (>= 0): la ley se calcula en cada     *)
+        (* llamada. LLAMAR DESDE UN OB CICLICO DE 100 ms (en la 1212C la ley tarda      *)
+        (* 45-68 ms y no cabe en un OB de 10 ms).                                      *)
+        IF PLCGlobalVar_FUZZY.plc_ts_counter_fuzzy >= 0 THEN 
+            PLCGlobalVar_FUZZY.plc_ts_counter_fuzzy := 0;
+        ELSE 
+            PLCGlobalVar_FUZZY.plc_ts_counter_fuzzy := PLCGlobalVar_FUZZY.plc_ts_counter_fuzzy + 1;
+        END_IF;
+END_CASE;
+END_FUNCTION_BLOCK

@@ -17,7 +17,7 @@ horizontal simulado en Unity, con los controladores ejecutándose en un **PLC Si
 | `controladores/mpc/` | Parámetros del MPC (`Parametros_MPC_v8.m`), construcción (`MPC_linealizar_v6_1.m`), sesión de MPC Toolbox (`TPSEP_MPC_v8_.mat`) y verificación del estimador (`verificar_estimador.m`) |
 | `plc/` | Código SCL de los controladores con la instrumentación de tiempo (`RUNTIME`), `HIL_Sync.scl`, `Diag_HIL.scl` y `Medir_OB.scl` (mide el intervalo entre arranques de un OB cíclico; se llama como primera instrucción de OB30, OB31 y OB32, cada uno con su DB de instancia) |
 | `Datos/` | Registros de todas las pruebas del artículo |
-| `analisis/` | `calcular_resultados_articulo.m` (valores de las tablas de Resultados), `calcular_ob_plc.m` (periodo de los OB medido en el PLC), `contrastar_qp_cotas.m` y `contrastar_qp_cotas_todas.m` (QP del SCL frente a `quadprog`), `generar_figuras_articulo_n.m` (figuras). |
+| `analisis/` | `calcular_ob_plc.m` (periodo de los OB medido en el PLC), `contrastar_qp_cotas.m` y `contrastar_qp_cotas_todas.m` (QP del SCL frente a `quadprog`), `generar_figuras_articulo_n.m` (figuras). |
 
 
 ## Plataforma
@@ -54,7 +54,7 @@ horizontal simulado en Unity, con los controladores ejecutándose en un **PLC Si
 
 ## Licencia
 
-- Código (MATLAB, C#, SCL): MIT
+- Código (MATLAB, C#, SCL)
 - Datos y modelos: Autor
 
 La biblioteca Sharp7 y los productos de MathWorks, Siemens y Unity tienen sus propias licencias y no se redistribuyen aquí.
