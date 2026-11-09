@@ -1,6 +1,5 @@
 # Separador trifásico: plataforma Hardware-in-the-Loop con PLC S7-1200 y Unity
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23824492.svg)](https://doi.org/10.5281/zenodo.23824492)
 
 Código, modelos, registros de pruebas y scripts de análisis del artículo **«Gestión de tiempos de respuesta en un separador trifásico mediante automatización basada en Hardware in the Loop para la evaluación de controladores PID, MPC y Fuzzy»** (MDPI *Processes*, en
 preparación). El trabajo compara controladores **PI**, **Fuzzy (Mamdani)** y **MPC** sobre un separador trifásico
