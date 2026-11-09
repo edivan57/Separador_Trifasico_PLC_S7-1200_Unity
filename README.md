@@ -1,5 +1,5 @@
 # Separador trifásico: plataforma Hardware-in-the-Loop con PLC S7-1200 y Unity
-
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24069678.svg)](https://doi.org/10.5281/zenodo.24069678)
 
 Código, modelos, registros de pruebas y scripts de análisis del artículo **«Gestión de tiempos de respuesta en un separador trifásico mediante automatización basada en Hardware in the Loop para la evaluación de controladores PID, MPC y Fuzzy»** (MDPI *Processes*, en
 preparación). El trabajo compara controladores **PI**, **Fuzzy (Mamdani)** y **MPC** sobre un separador trifásico
@@ -48,7 +48,7 @@ horizontal simulado en Unity, con los controladores ejecutándose en un **PLC Si
 
 | Versión | Cambios |
 |---|---|
-| 2.0.0 | Campañas nominal y de robustez con cinco repeticiones y pausa de 3 s entre repeticiones; sesión alternada con TIA Portal en línea y desconectado; cortes de comunicación con dos lógicas de reconexión (`Ciclos_Watchdog` de 10 y de 2) y cortes con cable; medición del periodo de los OB dentro del PLC (`Medir_OB.scl`); contraste del QP del MPC frente a `quadprog`; scripts de análisis actualizados |
+| 2.0.0 | Campañas nominal y de robustez con cinco repeticiones y pausa de 3 s entre repeticiones; sesión alternada con TIA Portal en línea y desconectado; cortes de comunicación con dos lógicas de reconexión (`Ciclos_Watchdog` de 10 y de 2) y cortes con cable; medición del periodo de los OB dentro del PLC (`Medir_OB.scl`); contraste del QP del MPC frente a `quadprog`; scripts de análisis actualizados (https://doi.org/10.5281/zenodo.24069678)|
 | 1.0.1 | Versión archivada anteriormente en Zenodo (https://doi.org/10.5281/zenodo.23824492) |
 
 ## Licencia
