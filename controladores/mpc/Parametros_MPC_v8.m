@@ -1,6 +1,5 @@
 function p = Parametros_MPC_v8()
-% Generado por Afinar_MPC el 2026-09-21 17:41
-% Base: Parametros_MPC_v7 | Variante: Peso pg x0.5
+
 
 % ---------- Horizontes ----------
 p.Ts = 0.10000000000000001;

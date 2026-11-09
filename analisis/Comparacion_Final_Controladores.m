@@ -1,25 +1,3 @@
-%% ============================================================
-%  COMPARACION_FINAL_CONTROLADORES.m
-%
-%  Compara PID, FUZZY y MPC en el separador trifasico (TPSEP) usando las
-%  corridas de Simulink y de PLC + Unity (HIL).
-%
-%  TABLAS (consola y Excel):
-%    T1  Indicadores globales: IAE, ISE y variacion total (TV)
-%    T2  Seguimiento de setpoint: tiempo de establecimiento y sobrepaso
-%    T3  Rechazo de perturbaciones: desviacion maxima
-%    T4  Acople entre lazos: desviacion ante cambios de OTRO lazo
-%    T5  Concordancia PLC + Unity frente a Simulink
-%    T6  Clasificacion por criterio (PLC + Unity)
-%
-%  FIGURAS (PNG 300 dpi y .fig):
-%    A   Cada controlador: Simulink frente a PLC + Unity (PV y CV)
-%    B   Cada lazo y plataforma: los 3 controladores, con su valvula
-%    C   Resumen por plataforma: los 3 lazos en una figura
-%
-%  Requiere MATLAB R2020a o posterior (tiledlayout, exportgraphics).
-%% ============================================================
-
 clc
 clearvars
 close all

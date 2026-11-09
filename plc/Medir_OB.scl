@@ -1,0 +1,90 @@
+
+FUNCTION_BLOCK Medir_OB
+VAR
+    reiniciar: BOOL := TRUE;
+    mem_rt: LREAL;
+    n_arr: DINT;
+    n_int: DINT;
+    n_desc: DINT;
+    ult_ms: LREAL;
+    min_ms: LREAL;
+    max_ms: LREAL;
+    suma1: LREAL;
+    suma2: LREAL;
+    fuera_01: DINT;
+    fuera_05: DINT;
+    fuera_1: DINT;
+    fuera_5: DINT;
+    media_ms: LREAL;
+    sd_ms: LREAL;
+    pct_fuera_1ms: LREAL;
+    r_s: LREAL;
+    ms_i: LREAL;
+    desv: LREAL;
+    kk: LREAL;
+    vv: LREAL;
+END_VAR
+(* 1) Reinicio de los acumuladores *)
+IF reiniciar THEN
+    mem_rt := 0.0;
+    n_arr := 0;
+    n_int := 0;
+    n_desc := 0;
+    ult_ms := 0.0;
+    min_ms := 1000000000.0;
+    max_ms := 0.0;
+    suma1 := 0.0;
+    suma2 := 0.0;
+    fuera_01 := 0;
+    fuera_05 := 0;
+    fuera_1 := 0;
+    fuera_5 := 0;
+    media_ms := 0.0;
+    sd_ms := 0.0;
+    pct_fuera_1ms := 0.0;
+    reiniciar := FALSE;
+END_IF;
+(* 2) Tiempo desde el arranque anterior del OB, en segundos *)
+r_s := RUNTIME(mem_rt);
+n_arr := n_arr + 1;
+(* 3) El primer arranque tras un reinicio solo fija el instante inicial.
+      Una medicion <= 0 (vuelta del contador de RUNTIME) o mayor o igual que 1 s se descarta. *)
+IF n_arr > 1 THEN
+    IF (r_s > 0.0) AND (r_s < 1.0) THEN
+        ms_i := r_s * 1000.0;
+        desv := ms_i - 100.0;
+        ult_ms := ms_i;
+        n_int := n_int + 1;
+        suma1 := suma1 + desv;
+        suma2 := suma2 + (desv * desv);
+        min_ms := MIN(IN1 := min_ms, IN2 := ms_i);
+        max_ms := MAX(IN1 := max_ms, IN2 := ms_i);
+        IF ABS(desv) > 0.1 THEN
+            fuera_01 := fuera_01 + 1;
+        END_IF;
+        IF ABS(desv) > 0.5 THEN
+            fuera_05 := fuera_05 + 1;
+        END_IF;
+        IF ABS(desv) > 1.0 THEN
+            fuera_1 := fuera_1 + 1;
+        END_IF;
+        IF ABS(desv) > 5.0 THEN
+            fuera_5 := fuera_5 + 1;
+        END_IF;
+        (* Estadisticas listas para leer en la tabla de observacion *)
+        kk := DINT_TO_LREAL(n_int);
+        vv := suma1 / kk;
+        media_ms := 100.0 + vv;
+        desv := (suma2 / kk) - (vv * vv);
+        IF desv > 0.0 THEN
+            sd_ms := SQRT(desv);
+        ELSE
+            sd_ms := 0.0;
+        END_IF;
+        pct_fuera_1ms := (100.0 * DINT_TO_LREAL(fuera_1)) / kk;
+    ELSE
+        n_desc := n_desc + 1;
+    END_IF;
+END_IF;
+END_FUNCTION_BLOCK
+

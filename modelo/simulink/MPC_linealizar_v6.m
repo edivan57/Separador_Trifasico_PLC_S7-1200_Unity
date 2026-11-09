@@ -1,23 +1,4 @@
-%% ============================================================
-%  MPC_linealizar_v6.m
-%
-%  Construye el MPC de MPCDesignerSession_v6 SIN abrir MPC Designer.
-%  Despues de correrlo se simula directamente: el bloque MPC Controller
-%  usa mpc1 y xmpc0 del workspace.
-%
-%  Fuente de verdad: Parametros_MPC_v6.m, generado una sola vez por
-%  Capturar_MPC_Sesion con los valores exactos de la sesion.
-%
-%  Pasos:
-%    1) Punto de operacion (solo xeq, mveq, md0)
-%    2) Parametros de la sesion
-%    3) Linealizacion de tpsep_v11 (identica a MPC_linealizar_3)
-%    4) Construccion del controlador
-%    5) Verificacion contra la sesion (si existe MPC_v6_sesion.mat)
-%    6) Ajustes opcionales sobre la sesion
-%    7) Estado inicial, huella del SCL y guardado
-%    8) Escenario de prueba
-%% ============================================================
+
 
 clc
 % warning off

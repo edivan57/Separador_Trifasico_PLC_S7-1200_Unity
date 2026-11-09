@@ -1,5 +1,5 @@
 function [data, output] = tpsep_v11(input, recycle)
-% Modelo dinamico corregido para NMPC/Simulink.
+
 % Estado: recycle = [hc hw hb pg_Pa]
 % Entrada: input = [qwi qci qgi vpw vpc vpg]
 

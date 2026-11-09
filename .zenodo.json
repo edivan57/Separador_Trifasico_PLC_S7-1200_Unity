@@ -1,0 +1,27 @@
+{
+  "upload_type": "software",
+  "title": "Gestión de tiempos de respuesta en un separador trifásico mediante automatización basada en Hardware in the Loop para la evaluación de controladores PID, MPC y Fuzzy",
+  "version": "2.0.0",
+  "publication_date": "2026-11-08",
+  "description": "<p>Código, modelos, registros de pruebas y scripts de análisis del artículo «Evaluación Hardware-in-the-Loop de controladores PID, FUZZY y MPC para un separador trifásico en un PLC S7-1200».</p><p>Un separador trifásico horizontal simulado en Unity se controla desde un PLC Siemens S7-1200 (CPU 1212C) que ejecuta un controlador PID, uno difuso (Mamdani) y un controlador predictivo (MPC), con el lazo cerrado por Ethernet y sincronizado por ciclo del PLC.</p><p>Incluye el modelo no lineal del separador en MATLAB, los modelos de Simulink, el código SCL de los controladores y de la instrumentación de tiempo, los scripts de Unity (C#), los registros de las campañas nominal, de robustez, de fallas y de reconexión, y los scripts de MATLAB que reproducen las tablas y figuras del artículo.</p><p>Novedades de la versión 2.0.0: campañas nominal y de robustez con cinco repeticiones y pausa entre repeticiones; sesión alternada con TIA Portal en línea y desconectado; cortes de comunicación con dos lógicas de reconexión y cortes con cable; medición del periodo de los OB dentro del PLC.</p>",
+  "creators": [
+    {
+      "name": "De la Cruz Vaca, Edgar Iván"
+    }  ],
+  "access_right": "open",
+  "license": "autor",
+  "language": "spa",
+  "keywords": [
+    "hardware-in-the-loop",
+    "programmable logic controller",
+    "Siemens S7-1200",
+    "TIA Portal",
+    "Unity",
+    "MPC control",
+    "Fuzzy control",
+    "PID control",
+    "three-phase separator",
+    "oil and gas",
+    "process control"
+  ]
+}

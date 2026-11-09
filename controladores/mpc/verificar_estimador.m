@@ -1,8 +1,4 @@
-%% verificar_estimador.m
-%  Comprueba el estimador de Kalman del MPC (mpc1) contra lo que dice el articulo.
-%  Requiere: MPC Toolbox y TPSEP_MPC_v8_.mat (lo genera MPC_linealizar_v6.m).
-%  Uso:      >> verificar_estimador
-%  Salida:   pantalla y verificacion_estimador.txt (mandame ese archivo si algo sale REVISAR).
+
 
 clc
 diary off

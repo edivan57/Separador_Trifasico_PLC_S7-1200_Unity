@@ -1,22 +1,4 @@
-// =====================================================================
-// HIL_Sync  -  Sincronizacion PLC <-> Unity, watchdog y reinicio del controlador
-// Version 0.3. Importar como fuente externa y crear una instancia por OB:
-//   "HIL_Sync_PID" (OB32), "HIL_Sync_FUZZY" (OB31), "HIL_Sync_MPC" (OB30).
-//
-// Variables de DB1 "Data" que usa:
-//   2   Metodo_Sync  : Int    (Unity -> PLC)  0 = asincrono, 1 = sincronizado
-//   124 Contador_PLC : DInt   (PLC -> Unity)  +1 por cada ciclo del controlador activo
-//   128 Seq_Unity    : DInt   (Unity -> PLC)  numero de la medicion enviada
-//   132 Eco_Seq      : DInt   (PLC -> Unity)  Seq_Unity con el que se calculo el ciclo
-//   136 Falla_Com    : Bool   (PLC -> Unity)  watchdog (solo modo sincronizado)
-//
-// Reglas:
-//  - Solo el OB del controlador ACTIVO escribe en las variables compartidas.
-//  - Reiniciar = TRUE en la primera llamada y en el primer ciclo inactivo
-//    despues de estar activo (pausa entre repeticiones o cambio de controlador).
-//  - Llamar al INICIO del OB (Inicio := TRUE, antes de leer las PV) y al
-//    FINAL (Inicio := FALSE, despues de escribir Cv_).
-// =====================================================================
+
 FUNCTION_BLOCK "HIL_Sync"
 { S7_Optimized_Access := 'TRUE' }
 VERSION : 0.3

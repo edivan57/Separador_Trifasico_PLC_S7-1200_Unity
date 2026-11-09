@@ -1,31 +1,4 @@
-(*
- *
- * File: Simulacion_Trifasico_PID_v8.scl
- *
- * IEC 61131-3 Structured Text (ST) code generated for subsystem "Simulacion_Trifasico_PID_v8/PID_"
- *
- * Model name                      : Simulacion_Trifasico_PID_v8
- * Model version                   : 1.68
- * Model creator                   : Ivan
- * Model last modified by          : Ivan
- * Model last modified on          : Mon Sep 21 16:20:13 2026
- * Model sample time               : 0.01s
- * Subsystem name                  : Simulacion_Trifasico_PID_v8/PID_
- * Subsystem sample time           : 0.01s
- * Simulink PLC Coder version      : 24.1 (R2024a) 19-Nov-2023
- * ST code generated on            : Mon Sep 21 16:21:07 2026
- *
- * Target IDE selection            : Siemens TIA Portal
- * Test Bench included             : No
- *
- * MODIFICADO: instrumentacion de tiempo con RUNTIME (lineas marcadas [DIAG]).
- *  - Mide solo las ejecuciones en que se calcula la ley de control
- *    (plc_ts_counter_pid = 0), asi el divisor 1:10 no diluye el promedio.
- *  - Requiere el DB global Diag_HIL (Diag_HIL.scl) en el proyecto.
- *  - La ley de control no cambia.
-  * [DIAG] Mediciones de RUNTIME <= 0.0 (vuelta del contador interno) se descartan.
- * Divisor 1:10 desactivado: la ley se ejecuta en cada llamada del OB32 (100 ms).
-*)
+
 DATA_BLOCK PLCGlobalVar_PID
 STRUCT 
     plc_ts_counter_pid: DINT;

@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "Si usa este software o estos datos, cítelos como se indica a continuación."
+title: "Gestión de tiempos de respuesta en un separador trifásico mediante automatización basada en Hardware in the Loop para la evaluación de controladores PID, MPC y Fuzzy"
+type: software
+authors:
+  - family-names: "De la Cruz Vaca"
+    given-names: "Edgar Iván"
+    affiliation: "[Universidad Politécnica Salesiana]"
+  - family-names: "Chasi Pesántez"
+    given-names: "Paúl Andrés"
+    affiliation: "[Universidad Politécnica Salesiana]"
+repository-code: "https://github.com/edivan57/Separador_Trifasico_PLC_S7-1200_Unity"
+url: "https://github.com/edivan57/Separador_Trifasico_PLC_S7-1200_Unity"
+abstract: >-
+  Código, modelos, registros de pruebas y scripts de análisis del artículo «Evaluación Hardware-in-the-Loop de
+  controladores PI, difuso y predictivo para un separador trifásico en un PLC S7-1200». Un separador trifásico
+  horizontal simulado en Unity se controla desde un PLC Siemens S7-1200 (CPU 1212C) que ejecuta un controlador PID,
+  FUZZY (Mamdani) y un MPC, con el lazo cerrado por Ethernet y sincronizado por ciclo del PLC.
+license: Autor
+version: "2.0.0"
+date-released: "2026-11-08"
+keywords:
+  - hardware-in-the-loop
+  - programmable logic controller
+  - Siemens S7-1200
+  - TIA Portal
+  - Unity
+  - MPC control
+  - Fuzzy control
+  - PID control
+  - three-phase separator
+  - oil and gas
+  - process control

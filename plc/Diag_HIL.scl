@@ -1,17 +1,4 @@
-(*
- * Diag_HIL.scl
- * DB global de diagnostico temporal para la plataforma HIL.
- * Importar como fuente externa ANTES de los controladores instrumentados.
- * Unity no lee este DB, asi que su tamano y orden no afectan a DB1.
- *
- *   *_mem   : memoria de la instruccion RUNTIME (no tocar)
- *   *_aux   : descarta el valor de la primera llamada a RUNTIME
- *   *_ms    : tiempo de la ultima ejecucion [ms]
- *   *_prom_ms / *_max_ms : promedio y maximo desde el ultimo reset [ms]
- *   *_n     : numero de ejecuciones medidas
- *   *_reset : poner en TRUE desde la tabla de observacion para reiniciar
- *   mpc_qp_* / mpc_n_* : estado del solver QP del MPC
- *)
+
 DATA_BLOCK Diag_HIL
 STRUCT
     (* OB ciclico completo *)

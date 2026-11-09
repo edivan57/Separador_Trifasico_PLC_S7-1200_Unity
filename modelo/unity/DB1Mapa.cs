@@ -2,10 +2,6 @@ using System;
 using Sharp7;
 
 // =====================================================================
-// DB1Mapa.cs  -  Mapa de DB1 "Data" (CPU 1511-1 PN, acceso no optimizado)
-// Un solo lugar con los offsets, usado por Comunicacion.cs,
-// Comunicacion_Sync.cs y Separador_Trifasico.cs.
-//
 //  Byte  Variable            Tipo            Escribe
 //  0.0   Activacion          Bool            Unity
 //  0.1   Activacion PID      Bool            Unity
@@ -24,9 +20,6 @@ using Sharp7;
 //  128   Seq_Unity           DInt            Unity
 //  132   Eco_Seq             DInt            PLC   <- Unity NUNCA escribe aqui
 //  136   Falla_Com           Bool            PLC   <- Unity NUNCA escribe aqui
-//
-// Unity escribe sus 112 bytes de los 124 originales en dos peticiones
-// (0-75 y 88-123), y despues Seq_Unity (128). Las zonas del PLC no se tocan.
 // =====================================================================
 public static class DB1Mapa
 {

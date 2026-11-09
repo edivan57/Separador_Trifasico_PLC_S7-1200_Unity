@@ -1,6 +1,4 @@
-% init_Fuzzy_TPSEP_1Block.m
-% Inicializa un solo FIS Mamdani MIMO para Simulink.
-% El bloque Fuzzy Logic Controller debe usar FIS name = fis_tpsep_1block
+
 clear all
 clc
 
