@@ -60,7 +60,7 @@ La biblioteca Sharp7 y los productos de MathWorks, Siemens y Unity tienen sus pr
 
 ## Cómo citar
 
-Ver `CITATION.cff`. Registro en Zenodo: https://doi.org/10.5281/zenodo.23824492
+Ver `CITATION.cff`. Registro en Zenodo: https://doi.org/10.5281/zenodo.24069678
 
 > De la Cruz Vaca, E.I.; Chasi Pesántez, P.A. *Gestión de tiempos de respuesta en un separador trifásico mediante automatización basada en Hardware in the Loop para la evaluación de controladores PID, MPC y Fuzzy*. *Processes* **2026**, *[volumen]*, [artículo].
 
