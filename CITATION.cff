@@ -16,7 +16,7 @@ abstract: >-
   FUZZY (Mamdani) y un MPC, con el lazo cerrado por Ethernet y sincronizado por ciclo del PLC.
 license: MIT
 version: "2.0.1"
-date-released: "2026-11-09"
+date-released: "2026-11-08"
 keywords:
   - hardware-in-the-loop
   - programmable logic controller
