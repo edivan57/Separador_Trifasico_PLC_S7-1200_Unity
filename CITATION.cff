@@ -2,13 +2,12 @@ cff-version: 1.2.0
 message: "Si usa este software o estos datos, cítelos como se indica a continuación."
 title: "Gestión de tiempos de respuesta en un separador trifásico mediante automatización basada en Hardware in the Loop para la evaluación de controladores PID, MPC y Fuzzy"
 type: software
-authors:
+author:
   - family-names: "De la Cruz Vaca"
     given-names: "Edgar Iván"
-    affiliation: "[Universidad Politécnica Salesiana]"
-  - family-names: "Chasi Pesántez"
-    given-names: "Paúl Andrés"
-    affiliation: "[Universidad Politécnica Salesiana]"
+    affiliation: "Universidad Politécnica Salesiana"
+    orcid: "https://orcid.org/0009-0004-1218-8570"
+
 repository-code: "https://github.com/edivan57/Separador_Trifasico_PLC_S7-1200_Unity"
 url: "https://github.com/edivan57/Separador_Trifasico_PLC_S7-1200_Unity"
 abstract: >-
