@@ -24,6 +24,8 @@ public class Separador_Trifasico : MonoBehaviour
     // ==========================================================
     [Header("Tiempo de simulación")]
     public bool runSimulation = true;
+    // Modelo de planta: true = tpsep_v12 (balances corregidos); false = tpsep_v11 (modelo de referencia)
+    public bool modeloCorregidoV12 = true;
     public float Ts = 0.1f;
 
     [Header("Temporización del lazo HIL")]
@@ -59,6 +61,20 @@ public class Separador_Trifasico : MonoBehaviour
     [Tooltip("Registro propio Datos_<CTRL>_<fecha>.txt aunque no haya repeticiones (necesario en modo hilo)")]
     public bool registroPropio = true;
     public bool nuevaSemillaPorRepeticion = true;     // robustez: semilla + (rep - 1)
+
+    [Header("Casos de falla de comunicación")]
+    [Tooltip("Etiqueta de un caso suelto (p. ej. C1b o C2): Datos_<CTRL>_<etiqueta>_repNN y <etiqueta>_Diag_Com_...")]
+    public string etiquetaCasoFija = "";
+    [Tooltip("Una sola corrida: repetición 1 = C3, 2 = C4, 3 = C5 (Numero Repeticiones = 3)")]
+    public bool secuenciaC3aC5 = false;
+    public Comunicacion_Sync.TipoFalla[] fallasSecuencia =
+        { Comunicacion_Sync.TipoFalla.PerdidaPaquetes, Comunicacion_Sync.TipoFalla.RetardoExtra, Comunicacion_Sync.TipoFalla.SesgoSensor };
+    public string[] etiquetasSecuencia = { "C3", "C4", "C5" };
+    [Tooltip("Semilla de las fallas en la primera vuelta de la secuencia; si hay más vueltas, + (vuelta - 1)")]
+    public int semillaFallasSecuencia = 1;
+    [Header("Casos de falla / solo lectura")]
+    public string casoActual = "";
+    private string etiquetaCaso = "";
     [Header("Repeticiones / solo lectura")]
     public int repeticionActual = 1;
     public bool enPausa;
@@ -178,7 +194,7 @@ public class Separador_Trifasico : MonoBehaviour
     public float ha;
 
     // ==========================================================
-    // 4) CONSTANTES DEL MODELO TPgsep_v11
+    // 4) CONSTANTES DEL MODELO TPSEP (v11 y v12)
     // ==========================================================
     private const float PSI_TO_PA = 6894.757f;
     private const float PA_TO_PSI = 1.0f / PSI_TO_PA;
@@ -931,7 +947,13 @@ public class Separador_Trifasico : MonoBehaviour
         double hc_m = SaturarD(xhc, 1e-6, hs - 1e-6);
         double hw_m = SaturarD(xhw, 1e-6, hs - 1e-6);
         double hb_m = SaturarD(xhb, 1e-6, 2.5);
-        double pg_m = Math.Max(xpg, 1000.0);
+        double pg_m = Math.Max(xpg, 1000.0);           // presion manometrica [Pa]
+
+        // Modelo corregido (v12): presion absoluta y caudal de gas estandar convertido
+        const double Patm = 101325.0;                  // [Pa]
+        const double Pstd = 101325.0;                  // 14.696 psia
+        const double Tstd = 288.706;                   // 60 F [K]
+        double pabs = pg_m + Patm;                     // presion absoluta [Pa]
 
         // ------------------------------------------------------
         // Volumen total y altura ha
@@ -953,14 +975,14 @@ public class Separador_Trifasico : MonoBehaviour
         // ------------------------------------------------------
         // Salida de crudo
         // ------------------------------------------------------
-        double argcb = (pg_m + rhoc * g * hb_m - pob) / sgc;
+        double argcb = ((modeloCorregidoV12 ? pabs : pg_m) + rhoc * g * hb_m - pob) / sgc;
         double qcb_m = argcb > 0.0 ? kvc * vpc * Math.Sqrt(argcb) : 0.0;
         if (!EsFinito(qcb_m) || qcb_m < 0.0) qcb_m = 0.0;
 
         // ------------------------------------------------------
         // Salida de agua
         // ------------------------------------------------------
-        double argwo = (pg_m + rhoc * g * hc_m + rhow * g * hw_m - poa) / sgw;
+        double argwo = ((modeloCorregidoV12 ? pabs : pg_m) + rhoc * g * hc_m + rhow * g * hw_m - poa) / sgw;
         double qwo_m = argwo > 0.0 ? kvw * vpw * Math.Sqrt(argwo) : 0.0;
         if (!EsFinito(qwo_m) || qwo_m < 0.0) qwo_m = 0.0;
 
@@ -968,8 +990,18 @@ public class Separador_Trifasico : MonoBehaviour
         // Salida de gas
         // ------------------------------------------------------
         double Tf = ((T - 273.15) * 9.0 / 5.0) + 32.0;
-        double pg_psia = pg_m * 1.450377e-4 + 14.7;
-        double poc_psia = poc * 1.450377e-4 + 14.7;
+        double pg_psia, poc_psia;
+        if (modeloCorregidoV12)
+        {
+            pg_psia = pabs * 1.450377e-4;                     // absoluta [psia]
+            poc_psia = poc * 1.450377e-4;                     // poc ya es absoluta
+            poc_psia = Math.Max(poc_psia, 0.5 * pg_psia);     // flujo critico: P2 >= P1/2
+        }
+        else
+        {
+            pg_psia = pg_m * 1.450377e-4 + 14.7;
+            poc_psia = poc * 1.450377e-4 + 14.7;
+        }
         double dp2 = pg_psia * pg_psia - poc_psia * poc_psia;
         double qgden = (mgas / mair) * (Tf + 460.0);
 
@@ -991,12 +1023,28 @@ public class Separador_Trifasico : MonoBehaviour
         // ------------------------------------------------------
         const double eps_h = 1e-4;
 
-        double dhc_m = (qci - qca_m) / HemiHead(Math.Max(hc_m, eps_h), ds, La);
         double dhw_m = (qwi - qwo_m) / HemiHead(Math.Max(hw_m, eps_h), ds, La);
-        double dhb_m = ha_m <= hs ? 0.0 : (qca_m - qcb_m) / HemiHead(Math.Max(hb_m, eps_h), ds, Lb);
+        double dhc_m, dhb_m;
+        if (modeloCorregidoV12)
+        {
+            // Volumen de crudo en la camara: V(Hw + Hc) - V(Hw)
+            double Aa = HemiHead(SaturarD(ha_m, eps_h, ds - eps_h), ds, La);
+            double dha_m = (qwi - qwo_m + qci - qca_m) / Aa;
+            dhc_m = dha_m - dhw_m;
+            // El colector se vacia aunque no haya rebose
+            dhb_m = (qca_m - qcb_m) / HemiHead(Math.Max(hb_m, eps_h), ds, Lb);
+        }
+        else
+        {
+            dhc_m = (qci - qca_m) / HemiHead(Math.Max(hc_m, eps_h), ds, La);
+            dhb_m = ha_m <= hs ? 0.0 : (qca_m - qcb_m) / HemiHead(Math.Max(hb_m, eps_h), ds, Lb);
+        }
 
         double Vgas = Math.Max(vt - va_m - vb_m, 1e-3);
-        double dpg_m = pg_m * (qgi - qgo_m + qci + qwi - qwo_m - qcb_m) / Vgas;
+        double qliq = qci + qwi - qwo_m - qcb_m;       // entrada neta de liquido [m3/s]
+        double dpg_m = modeloCorregidoV12
+            ? (Pstd * T / Tstd * (qgi - qgo_m) + pabs * qliq) / Vgas
+            : pg_m * (qgi - qgo_m + qliq) / Vgas;
         if (!EsFinito(dpg_m)) dpg_m = 0.0;
 
         return new ModeloResult
@@ -1146,10 +1194,45 @@ public class Separador_Trifasico : MonoBehaviour
         print("Inicio de la repetición " + repeticionActual + " de " + numeroRepeticiones);
     }
 
+    // Fija el caso de falla de la repetición que empieza y la etiqueta de los nombres de archivo.
+    // Secuencia: rep 1 = C3, rep 2 = C4, rep 3 = C5 (y vuelve a empezar si hay más repeticiones).
+    // Devuelve el número de repetición dentro del caso (vuelta), para el sufijo _repNN.
+    private int AplicarCasoSecuencia()
+    {
+        if (secuenciaC3aC5 && repetirEscenario && fallasSecuencia != null && fallasSecuencia.Length > 0)
+        {
+            int n = fallasSecuencia.Length;
+            int i = (repeticionActual - 1) % n;
+            int vuelta = (repeticionActual - 1) / n + 1;
+            string et = (etiquetasSecuencia != null && i < etiquetasSecuencia.Length && etiquetasSecuencia[i] != "")
+                        ? etiquetasSecuencia[i] : "F" + (i + 1);
+            etiquetaCaso = "_" + et;
+            casoActual = et + " (" + fallasSecuencia[i] + ")";
+            if (com != null) com.ConfigurarCaso(fallasSecuencia[i], et + "_", semillaFallasSecuencia + vuelta - 1);
+            else Debug.LogWarning("Secuencia C3-C5 sin Comunicacion_Sync asignado: no se inyecta ninguna falla");
+            print("Caso " + casoActual + ", repetición " + vuelta + " (corrida " + repeticionActual + " de " + numeroRepeticiones + ")");
+            return vuelta;
+        }
+        if (!string.IsNullOrEmpty(etiquetaCasoFija))
+        {
+            etiquetaCaso = "_" + etiquetaCasoFija;
+            if (com != null)
+            {
+                casoActual = etiquetaCasoFija + " (" + com.falla + ")";
+                // Un solo Diag_Com para todas las repeticiones del caso, con la etiqueta delante
+                if (repeticionActual == 1) com.ConfigurarCaso(com.falla, etiquetaCasoFija + "_", com.semillaFallas);
+            }
+            else casoActual = etiquetaCasoFija;
+        }
+        else { etiquetaCaso = ""; casoActual = ""; }
+        return repeticionActual;
+    }
+
     private void AbrirRegistrosRepeticion()
     {
         string fecha = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        string rep = repetirEscenario ? "_rep" + repeticionActual.ToString("00") : "";
+        int repCaso = AplicarCasoSecuencia();
+        string rep = repetirEscenario ? "_rep" + repCaso.ToString("00") : "";
         etiquetaCtrl = datos.Activation_MPC ? "MPC" : datos.Activation_FUZZY ? "FUZZY" : datos.Activation_PID ? "PID" : "CTRL";
 
         rutaRobustez = Path.Combine(rutaProyecto,
@@ -1168,7 +1251,7 @@ public class Separador_Trifasico : MonoBehaviour
         }
 
         CerrarRegistroRepeticion();
-        sufijoRegistro = rep;
+        sufijoRegistro = etiquetaCaso + rep;
         abrirRegistroPendiente = registroPropio || (repetirEscenario && registroPorRepeticion);
     }
 

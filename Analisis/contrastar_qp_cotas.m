@@ -1,7 +1,7 @@
 function R = contrastar_qp_cotas(archivo_datos, archivo_scl, desfase)
 
 if nargin < 3, desfase = 0; end
-raiz = fileparts(fileparts(mfilename('fullpath')));    % raiz del repositorio si este archivo esta en analisis/
+raiz = fileparts(fileparts(mfilename('fullpath')));    % raiz del repositorio si este archivo esta en Analisis/
 archivo_datos = resolver(archivo_datos, raiz);  archivo_scl = resolver(archivo_scl, raiz);
 K  = constantes_scl(fileread(archivo_scl));
 D  = dlmread(archivo_datos, '\t', 1, 0);  N = size(D, 1);

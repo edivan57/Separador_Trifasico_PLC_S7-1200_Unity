@@ -1,12 +1,3 @@
-%% ============================================================
-%  SEGUNDO ESCENARIO DE PRUEBA - SEPARADOR TRIFASICO (Simulink)
-%  Para evaluar los controladores SIN retocar sus sintonias (las sintonias se ajustaron con Escenario_Trifasico.m).
-%  Mismas condiciones de planta y mismos limites de operacion, pero otro orden de las fases y otras combinaciones
-%  de referencias y caudales. Aperturas de equilibrio de cada fase [%] (agua, crudo, gas), calculadas con tpsep_v11:
-%    fase 1: 68.5 24.9 50.3 | fase 2: 53.6 24.9 50.3 | fase 3: 46.6 21.6 41.6 | fase 4: 46.6 21.3 41.6 | fase 5: 46.6 21.3 35.7
-%    fase 6: 69.0 23.0 39.5 | fase 7: 68.9 23.0 39.5 | fase 8: 61.9 21.3 39.7 | fase 9: 57.7 21.3 39.7 | fase 10: 68.5 24.9 50.3
-%  (todas entre 20 y 70 %: ninguna fase exige una valvula saturada).
-%% ============================================================
 
 %% 1) TIEMPO
 ts    = 0.1;                 % [s] periodo de muestreo del escenario

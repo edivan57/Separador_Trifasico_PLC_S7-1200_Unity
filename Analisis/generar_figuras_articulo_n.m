@@ -1,3 +1,35 @@
+%% GENERAR_FIGURAS_ARTICULO
+% Figuras de resultados del articulo del separador trifasico HIL: F01-F10 del texto principal,
+% F21 (esquema del separador, Figura 2 del texto) y F11 del material suplementario.
+% CPU Siemens S7-1200 (1212C) + Unity; controladores PI (PID con Td = 0), Fuzzy y MPC.
+%
+% Programa unico: configuracion, carga de datos, las figuras y las funciones auxiliares al
+% final del archivo. No requiere toolboxes. Requiere MATLAB R2018a o posterior (funciones
+% locales en scripts y NumColumns).
+%
+% USO (con la estructura de carpetas del repositorio; este archivo puede estar en la raiz o en Analisis/)
+%   1. Deje los archivos en las carpetas del repositorio:
+%        F01-F04, F06, F08  Datos/Nominal/<Ctrl>/Datos_<CTRL>_rep01_*.txt  (primera repeticion nominal;
+%                           nombres en D.arch_HIL)
+%        F05                lo anterior y Datos/Simulink_diseno/*_flat.mat (simulacion de diseno);
+%                           en el MPC compara el de cotas (HIL) con el completo (SIL)
+%        F09, F10           Controladores/fuzzy/fis_tpsep_1block.fis
+%        F11                Datos/Reconexion/Cable_wd2/<Ctrl>/Datos_*.txt y Diag_Com_CorteReal_*.csv de los tres cortes
+%                           con retiro real del cable (nombres en D.arch_corte y D.arch_corte_diag)
+%        F21                no necesita datos (dibujo del modelo)
+%        F12                no se genera: se retiro del articulo
+%        Los archivos se buscan por nombre; si no estan en la subcarpeta indicada en la configuracion, el script los
+%        busca en las demas subcarpetas de Datos (funcion ubicar, al final del archivo).
+%   2. Ejecute este archivo (F5). Los PDF se guardan en la carpeta FIGURAS con los nombres que
+%      usan Escrito.tex y Material_suplementario.tex.
+%   3. Para generar solo algunas figuras, edite la variable GENERAR (p. ej. [3 4] o [5 11]).
+%      Solo se leen los archivos de las figuras pedidas.
+%
+% CONVENCIONES
+%   e = SP - PV;  Ts = 0.1 s;  niveles en ft (los datos vienen en m);  P_g en psi;  aperturas en %.
+%   Unidades: niveles en ft, presion en psi, aperturas en %.
+%   Fila k del .txt: pv_k y cv_k antes de integrar (como Simulink).
+%   Numeracion de las figuras: F12 se retiro del articulo; se conservan los nombres de archivo.
 
 clear; close all; clc;
 
@@ -13,27 +45,26 @@ D.carpeta_fig   = fullfile(raiz, 'figuras');
 if ~exist(D.carpeta_fig, 'dir'), mkdir(D.carpeta_fig); end
 
 % Archivos de la configuracion final
-D.CTRL     = {'PI', 'Fuzzy', 'MPC'};          % el PID incremental con Td = 0 opera como PI
-% D.arch_HIL = {'Archivos Separador Trifasico\Datos\Nominal\PID\Datos_PID_rep02_*',...
-%               'Archivos Separador Trifasico\Datos\Nominal\FUZZY\Datos_FUZZY_rep02_*1.txt',...
-%               'Archivos Separador Trifasico\Datos\Nominal\PID\Datos_MPC_rep02_*.txt'};
-D.arch_HIL = {'PID/Datos_PID_rep02_20261106_034525.txt',...
-              'Fuzzy/Datos_FUZZY_rep02_20261106_020424.txt',...
-              'MPC/Datos_MPC_rep02_20261106_001402.txt'};
-D.arch_SIL = {'pid_run22_flat.mat', 'fuzzy_run23_flat.mat', 'mpc_run30_flat.mat'};
-D.arch_FIS = fullfile('..', 'controladores', 'fuzzy', 'fis_tpsep_1block.fis');   % relativo a Datos/
+D.CTRL     = {'PID', 'Fuzzy', 'MPC'};          % el PID incremental con Td = 0 opera como PI
+% Version sincronizada: primera repeticion nominal de cada controlador
+% Se busca por patron para no depender de la fecha del archivo (campana nominal)
+% Nombres exactos de la repeticion 1 de cada controlador. Si no estan en Datos/Nominal/<Ctrl>/, ubicar() los busca por nombre
+% en las subcarpetas de Datos. Tambien se admiten comodines, p. ej. 'Nominal/PID/Datos_PID_rep01_*.txt' (si hay varios, usa el mas reciente).
+D.arch_HIL = {'Nominal_v12/PID/Datos_PID_rep01_20261113_050913.txt', 'Nominal_v12/Fuzzy/Datos_FUZZY_rep01_20261113_013318.txt', 'Nominal_v12/MPC/Datos_MPC_rep01_20261112_235142.txt'};
+D.arch_SIL = {'Simulink_diseno/pid_run22_flat.mat', 'Simulink_diseno/fuzzy_run23_flat.mat', 'Simulink_diseno/mpc_run30_flat.mat'};
+D.arch_FIS = fullfile('..', 'Controladores', 'fuzzy', 'fis_tpsep_1block.fis');   % relativo a Datos/
 
 % F11: cortes con retiro real del cable (un Datos y un Diag_Com por controlador, en el orden PID, Fuzzy, MPC)
-D.arch_corte      = {'Datos_PID_20261107_211405.txt', 'Datos_FUZZY_20261107_203924.txt', ...
-                     'Datos_MPC_20261107_205647.txt'};
-D.arch_corte_diag = {'Diag_Com_CorteReal_20261107_211401.csv', 'Diag_Com_CorteReal_20261107_203920.csv', ...
-                     'Diag_Com_CorteReal_20261107_205642.csv'};
+D.arch_corte      = {'Reconexion_v12/Cable_wd2/PID/Datos_PID_20261114_040405.txt', 'Reconexion_v12/Cable_wd2/Fuzzy/Datos_FUZZY_20261114_013001.txt', ...
+                     'Reconexion_v12/Cable_wd2/MPC/Datos_MPC_20261114_011136.txt'};
+D.arch_corte_diag = {'Reconexion_v12/Cable_wd2/PID/Diag_Com_CorteReal_20261114_040403.csv', 'Reconexion_v12/Cable_wd2/Fuzzy/Diag_Com_CorteReal_20261114_012957.csv', ...
+                     'Reconexion_v12/Cable_wd2/MPC/Diag_Com_CorteReal_20261114_011118.csv'};
 D.F06_DERIVA = false;            % F06: true = histograma y deriva acumulada; false = solo el histograma
 D.FUENTE_MF = 'Times New Roman';  % tipografia (serif) de F09 y F10, como en el escrito
 D.FUENTE = '';                  % tipografia de las figuras; '' = la de MATLAB. Para igualar el texto del
                                 % escrito use 'Palatino Linotype' (Windows) o 'Palatino' (macOS)
 D.corte_antes   = 20;           % [s] mostrados antes del corte
-D.corte_despues = 100;          % [s] mostrados despues del inicio del corte
+D.corte_despues = 14;           % [s] mostrados despues del inicio del corte
 
 % Constantes
 D.Ts   = 0.1;
@@ -56,10 +87,10 @@ D.DIST_T    = [200 300 700];
 D.DIST_NAME = {'Q_{o,in}', 'Q_{g,in}', 'Q_{w,in}'};
 
 % Costo computacional medido en la CPU 1212C con RUNTIME (bloque Diag_Hil) [ms]: Tabla del costo
-% computacional del articulo, cinco repeticiones nominales. En el Fuzzy el maximo excluye la primera 
-% ejecucion
-D.t_medio_ms = [0.071 3.87 5.96];            % PID, Fuzzy, MPC (Diag_HIL, sesiones nominales del 5 y 6 de noviembre)
-D.t_max_ms   = [0.108 5.0  34.0];
+% computacional del articulo, cinco repeticiones nominales. En el Fuzzy el maximo excluye la primera
+% ejecucion (18.8 ms), que evalua una sola vez las funciones de pertenencia de salida.
+D.t_medio_ms = [0.072 3.93 6.06];            % PID, Fuzzy, MPC (Diag_HIL, campana nominal)
+D.t_max_ms   = [0.106 18.95 28.55];   % el maximo del Fuzzy es su primera ejecucion
 D.T_OB_ms    = 100;
 
 % Estilo de las figuras
@@ -219,12 +250,13 @@ if ismember(6, GENERAR)
     end
     yl = ylim(ax1);
     plot(ax1, [D.Ts D.Ts], [1 yl(2)], 'k--', 'LineWidth', 0.8, 'HandleVisibility', 'off');
-    set(ax1, 'YScale', 'log'); xlim(ax1, [0 0.45]);
+    set(ax1, 'YScale', 'log'); xlim(ax1, [0.06 0.16]);
     xlabel(ax1, '\Deltat_{real} [s]'); ylabel(ax1, 'Ciclos');
     leyenda(ax1, 1, 'FontSize', 7);
     if ~isempty(ax2)
         xlabel(ax2, 'Tiempo simulado [s]'); ylabel(ax2, 't_{real} - t_{sim} [s]');
         xlim(ax2, [D.t(1) D.t(end)]);
+        % xlim(ax2, [0.01 0.15]);
     end
     guardar_fig(fig, D, 'F06_tiempo_real.pdf');
 end
@@ -268,7 +300,8 @@ if ismember(8, GENERAR)
 end
 
 %% ======================= F09 - Funciones de pertenencia =================
-% Las seis entradas comparten las mismas 7 funciones y las tres salidas las mismas 9.\
+% Las seis entradas comparten las mismas 7 funciones y las tres salidas las mismas 9.
+% Dos paneles apilados, lineas negras y el nombre de cada conjunto sobre su cima, como en el escrito.
 if any(ismember([9 10], GENERAR))
     FIS = fis_leer(ubicar(D, D.arch_FIS));
 end
@@ -303,6 +336,7 @@ end
 
 %% ======================= F10 - Superficie de control del FIS ============
 % Lazo 1 (H_w); los tres lazos comparten reglas y funciones.
+% Mamdani min-max, salida discretizada en 101 puntos y centroide (como el SCL).
 if ismember(10, GENERAR)
     R1 = FIS.rules(FIS.rules(:, 1) > 0 & FIS.rules(:, 2) > 0 & FIS.rules(:, 7) > 0, [1 2 7]);
     yo = linspace(-1, 1, 101);
@@ -346,7 +380,10 @@ end
 
 
 %% ======================= F21 - Esquema del separador (Figura 2 del texto) ===
-% Separador horizontal con la nomenclatura del modelo
+% Separador horizontal con la nomenclatura del modelo; alturas a escala (D = 10 ft = 3 unidades),
+% longitudes sin escala. Equivale al bloque TikZ del escrito: entrada lateral izquierda, por una
+% boquilla sobre la cabeza izquierda y sobre el nivel del crudo, como en el diagrama P&ID.
+% No necesita datos. Unidades del dibujo: 1 unidad = 1 cm del esquema original.
 if ismember(21, GENERAR)
     R = 1.5;  xvert = 8.0;  xfin = 10.2;  yfondo = -R;      % radio, vertedero, fin del cilindro, fondo
     yhs = -0.3;  yhw = -0.7125;  yha = -0.2463;  yho = -0.7914;   % hs=4 ft, Hw=2.625 ft, Ha=4.179 ft, Ho=2.362 ft
@@ -687,6 +724,10 @@ end
 end
 
 function [t0, t1] = detectar_corte(archivo, Ts)
+% Intervalo [t0, t1) en que la planta no recibio acciones nuevas del PLC, a partir del Diag_Com:
+%   ciclo;contador_plc;eco_seq;t_s;dt_ciclo_ms;lectura_ms;escritura_ms;latencia_lazo_ms;
+%   retenido;retardo_muestras;saltados;sintetico;falla_com_plc
+% Paso de planta = ciclo - 2 + saltados acumulados antes (los ciclos saltados se rellenan sin fila propia).
 M = leer_numerico(archivo, ';', 1);
 ciclo = M(:, 1);  salt = M(:, 11);  idx = find(M(:, 12) == 1);
 if isempty(idx), error('detectar_corte: %s no tiene filas sinteticas (no hubo corte)', archivo); end
@@ -698,6 +739,7 @@ t1 = (ciclo(z) - 2 + sum(salt(1:z)) + 1) * Ts;
 end
 
 function banda(ax, t0, t1)
+% Banda gris detras de las curvas con el intervalo sin acciones nuevas (usa los limites actuales de Y).
 yl = ylim(ax);
 h = patch(ax, [t0 t1 t1 t0], [yl(1) yl(1) yl(2) yl(2)], [0.82 0.82 0.82], 'EdgeColor', 'none');
 ylim(ax, yl);
@@ -706,6 +748,7 @@ set(ax, 'Children', [ch(ch ~= h); h]);               % la banda al fondo
 end
 
 function h = hist_densidad(ax, x, bordes, relleno, borde, nombre)
+% Histograma normalizado a densidad, dibujado como escalones con relleno; devuelve un manejador de leyenda.
 x = x(isfinite(x) & x >= bordes(1) & x < bordes(end));
 n = histc(x(:), bordes);  n = n(1:end - 1);          %#ok<HISTC>
 dens = n(:)' / (sum(n) * (bordes(2) - bordes(1)));

@@ -1,8 +1,8 @@
 function T = contrastar_qp_cotas_todas(carpeta, archivo_scl)
 
-raiz = fileparts(fileparts(mfilename('fullpath')));    % raiz del repositorio si este archivo esta en analisis/
-if nargin < 1 || isempty(carpeta), carpeta = fullfile('Datos', 'Nominal', 'MPC'); end
-if nargin < 2, archivo_scl = fullfile('plc', 'Simulacion_Trifasico_MPC_v8_M6_caja_S71200.scl'); end
+raiz = fileparts(fileparts(mfilename('fullpath')));    % raiz del repositorio si este archivo esta en Analisis/
+if nargin < 1 || isempty(carpeta), carpeta = fullfile('Datos', 'Nominal_v12', 'MPC'); end   % campana nominal con el modelo corregido
+if nargin < 2, archivo_scl = fullfile('PLC', 'Simulacion_Trifasico_MPC_v8_M6_caja_S71200.scl'); end
 if iscell(carpeta)
     archivos = carpeta(:)';
 else

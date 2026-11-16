@@ -8,7 +8,13 @@ using Sharp7;
 using Debug = UnityEngine.Debug;
 
 // =====================================================================
-
+// Mapa de DB1 "Data": ver DB1Mapa.cs. Se conservan los 124 bytes originales
+// (Unity escribe 0-75 y 88-123, nunca Cv_ en 76-87) y se usan:
+//   124 DInt Contador_PLC   (PLC -> Unity)  incrementado al final del OB
+//   128 DInt Seq_Unity      (Unity -> PLC)  ciclo con el que se calculo la medicion
+//   132 DInt Eco_Seq        (PLC -> Unity)  Seq_Unity leido al inicio del OB
+//   136 Bool Falla_Com      (PLC -> Unity)  watchdog del PLC
+//   2   Int  Metodo_Sync    (Unity -> PLC)  = 1 en este modo
 // =====================================================================
 public class Comunicacion_Sync : MonoBehaviour
 {
@@ -49,6 +55,8 @@ public class Comunicacion_Sync : MonoBehaviour
     public float sesgo = 0.01f;                                   // [m] o [psi]
     public int sensorInicioCiclo = 4500;
     public int sensorDuracionCiclos = 100;
+    [Tooltip("Prefijo de los archivos Diag_Com (p. ej. C1b_). En la secuencia C3-C5 lo fija Separador_Trifasico")]
+    public string prefijoArchivos = "";
 
     [Header("Diagnostico (solo lectura)")]
     public int contadorPLC;
@@ -73,12 +81,16 @@ public class Comunicacion_Sync : MonoBehaviour
     private bool hayEscritura;
 
     // ---------------- Escritura en una sola peticion (escrituraUnica) ----------------
+    // Zonas de Unity en DB1: 0-75 (bits de activacion, Metodo_Sync, Sp, Pv, perturbaciones),
+    // 88-123 (ganancias) y 128-131 (Seq_Unity). Nunca 76-87 (Cv_), 124-127 ni 132-136.
     private const int ZONA_INI = 0, ZONA_TAM = 76;
     private const int GAN_INI = 88, GAN_TAM = 36;
     private const int SEQ_OFS = 128;
     private readonly byte[] bufSeq = new byte[4];
     private byte[] ultimasGananciasMulti;
 
+    // Los items de una misma peticion se escriben en orden: la medicion antes que Seq_Unity,
+    // asi el PLC nunca ve un Seq_Unity nuevo con una medicion vieja.
     private int EscribirMedicionYSeq(byte[] img, int seq)
     {
         var mv = new S7MultiVar(cliente);
@@ -129,16 +141,69 @@ public class Comunicacion_Sync : MonoBehaviour
     private volatile string avisoPantalla = "";
     private GUIStyle estiloAviso;
 
-    void Start()
+    // ---------------- Cambio de caso de falla sin detener Unity (secuencia C3-C5) ----------------
+    private volatile bool reinicioCasoPendiente;
+    private int semillaCaso;
+    private int lineasLog;          // filas de datos del Diag_Com abierto
+    private bool iniciado;
+    private string carpetaLog;                // Application.dataPath solo se puede leer en el hilo principal
+    private volatile string rutaLogPendiente; // ruta del Diag_Com del caso nuevo, armada en el hilo principal
+
+    // Llamado por Separador_Trifasico al abrir cada repeticion. El cambio se aplica en el hilo
+    // de comunicacion, al inicio de su siguiente vuelta: semilla, FIFO del retardo y sensor
+    // congelado vuelven a cero, y se abre un Diag_Com nuevo con el nombre del caso.
+    public void ConfigurarCaso(TipoFalla nueva, string prefijo, int semilla)
     {
-        rng = new System.Random(semillaFallas);
+        falla = nueva;
+        prefijoArchivos = prefijo ?? "";
+        semillaCaso = semilla;
+        rutaLogPendiente = NuevaRutaLog();       // hilo principal: aqui si se puede usar Application.dataPath
+        if (iniciado) reinicioCasoPendiente = true;
+        else semillaFallas = semilla;   // Start() aun no corre: lo toma al abrir el registro
+    }
+
+    // Solo desde el hilo principal (Start o ConfigurarCaso).
+    private string NuevaRutaLog()
+    {
+        if (carpetaLog == null) carpetaLog = Path.Combine(Application.dataPath, "..");
         string etiqueta = avisosCorteReal ? "CorteReal" : falla.ToString();
-        rutaLog = Path.Combine(Application.dataPath, "..",
-            "Diag_Com_" + etiqueta + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv");
-        if (cliente.ConnectTo(ip, 0, 1) != 0) { Debug.LogError("Comunicacion_Sync: no se pudo conectar"); return; }
+        return Path.Combine(carpetaLog,
+            prefijoArchivos + "Diag_Com_" + etiqueta + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv");
+    }
+
+    private void AbrirLog(string ruta)
+    {
+        rutaLog = ruta;
         log = new StreamWriter(rutaLog);
         log.WriteLine("ciclo;contador_plc;eco_seq;t_s;dt_ciclo_ms;lectura_ms;escritura_ms;latencia_lazo_ms;" +
                       "retenido;retardo_muestras;saltados;sintetico;falla_com_plc");
+        lineasLog = 0;
+    }
+
+    // Se ejecuta solo en el hilo de comunicacion (el unico que escribe el Diag_Com).
+    private void AplicarCambioDeCaso()
+    {
+        reinicioCasoPendiente = false;
+        rng = new System.Random(semillaCaso);
+        fifoCv.Clear();
+        congelado = null;
+        if (log != null)
+        {
+            log.Flush(); log.Close(); log = null;
+            if (lineasLog == 0) { try { File.Delete(rutaLog); } catch (Exception) { } }   // archivo vacio
+        }
+        AbrirLog(rutaLogPendiente);
+        Debug.Log("Comunicacion_Sync: caso " + prefijoArchivos + falla + ", semilla " + semillaCaso + " -> " + Path.GetFileName(rutaLog));
+    }
+
+    void Start()
+    {
+        rng = new System.Random(semillaFallas);
+        semillaCaso = semillaFallas;
+        if (cliente.ConnectTo(ip, 0, 1) != 0) { Debug.LogError("Comunicacion_Sync: no se pudo conectar"); return; }
+        AbrirLog(NuevaRutaLog());
+        reinicioCasoPendiente = false;
+        iniciado = true;
         corriendo = true;
         reloj.Start();
         hilo = new Thread(Bucle) { IsBackground = true, Priority = System.Threading.ThreadPriority.AboveNormal };
@@ -183,6 +248,8 @@ public class Comunicacion_Sync : MonoBehaviour
                PasoPlanta() >= corteInicioCiclo && PasoPlanta() < corteInicioCiclo + corteDuracionCiclos;
     }
 
+    // Paso de la planta (num del Separador): el corte cae siempre en el mismo instante
+    // del escenario, tambien en cada repeticion. Sin Separador, se usan los ciclos leidos.
     private int PasoPlanta()
     {
         return separador != null ? separador.num : ciclosDesdeInicio;
@@ -193,6 +260,7 @@ public class Comunicacion_Sync : MonoBehaviour
         byte[] rd = new byte[DB1Mapa.LECTURA_TAM];   // bytes 76-136
         while (corriendo)
         {
+            if (reinicioCasoPendiente) AplicarCambioDeCaso();
             double ahora = reloj.Elapsed.TotalMilliseconds;
             if (avisosCorteReal) ActualizarAviso();
 
@@ -459,6 +527,7 @@ public class Comunicacion_Sync : MonoBehaviour
                            double lat, int ret, int salt, bool sint, int retardo)
     {
         if (log == null) return;
+        lineasLog++;
         log.WriteLine(string.Join(";", ciclo, contador, eco, (tms / 1000.0).ToString("F4"), dt.ToString("F3"),
             lec.ToString("F3"), esc.ToString("F3"), double.IsNaN(lat) ? "" : lat.ToString("F3"),
             ret, retardo, salt, sint ? 1 : 0, fallaComPLC ? 1 : 0));
