@@ -1,40 +1,10 @@
 %% GENERAR_FIGURAS_ARTICULO
-% Figuras de resultados del articulo del separador trifasico HIL: F01-F10 del texto principal,
-% F21 (esquema del separador, Figura 2 del texto) y F11 del material suplementario.
-% CPU Siemens S7-1200 (1212C) + Unity; controladores PI (PID con Td = 0), Fuzzy y MPC.
-%
-% Programa unico: configuracion, carga de datos, las figuras y las funciones auxiliares al
-% final del archivo. No requiere toolboxes. Requiere MATLAB R2018a o posterior (funciones
-% locales en scripts y NumColumns).
-%
-% USO (con la estructura de carpetas del repositorio; este archivo puede estar en la raiz o en Analisis/)
-%   1. Deje los archivos en las carpetas del repositorio:
-%        F01-F04, F06, F08  Datos/Nominal/<Ctrl>/Datos_<CTRL>_rep01_*.txt  (primera repeticion nominal;
-%                           nombres en D.arch_HIL)
-%        F05                lo anterior y Datos/Simulink_diseno/*_flat.mat (simulacion de diseno);
-%                           en el MPC compara el de cotas (HIL) con el completo (SIL)
-%        F09, F10           Controladores/fuzzy/fis_tpsep_1block.fis
-%        F11                Datos/Reconexion/Cable_wd2/<Ctrl>/Datos_*.txt y Diag_Com_CorteReal_*.csv de los tres cortes
-%                           con retiro real del cable (nombres en D.arch_corte y D.arch_corte_diag)
-%        F21                no necesita datos (dibujo del modelo)
-%        F12                no se genera: se retiro del articulo
-%        Los archivos se buscan por nombre; si no estan en la subcarpeta indicada en la configuracion, el script los
-%        busca en las demas subcarpetas de Datos (funcion ubicar, al final del archivo).
-%   2. Ejecute este archivo (F5). Los PDF se guardan en la carpeta FIGURAS con los nombres que
-%      usan Escrito.tex y Material_suplementario.tex.
-%   3. Para generar solo algunas figuras, edite la variable GENERAR (p. ej. [3 4] o [5 11]).
-%      Solo se leen los archivos de las figuras pedidas.
-%
-% CONVENCIONES
-%   e = SP - PV;  Ts = 0.1 s;  niveles en ft (los datos vienen en m);  P_g en psi;  aperturas en %.
-%   Unidades: niveles en ft, presion en psi, aperturas en %.
-%   Fila k del .txt: pv_k y cv_k antes de integrar (como Simulink).
-%   Numeracion de las figuras: F12 se retiro del articulo; se conservan los nombres de archivo.
+
 
 clear; close all; clc;
 
 %% ======================= 1. CONFIGURACION ===============================
-GENERAR = [1 2 3 4 5 6 7 8 9 10 11 21];      % figuras a generar (F12 se retiro del articulo)
+GENERAR = [1 2 3 4 6 7 8 9 10 11 21];        % figuras del articulo; agregue 5 para F05 (necesita Datos/Modelo_v12/*_esc1_v12A_flat.mat)
 
 raiz = fileparts(mfilename('fullpath'));
 if isempty(raiz), raiz = pwd; end
@@ -48,11 +18,11 @@ if ~exist(D.carpeta_fig, 'dir'), mkdir(D.carpeta_fig); end
 D.CTRL     = {'PID', 'Fuzzy', 'MPC'};          % el PID incremental con Td = 0 opera como PI
 % Version sincronizada: primera repeticion nominal de cada controlador
 % Se busca por patron para no depender de la fecha del archivo (campana nominal)
-% Nombres exactos de la repeticion 1 de cada controlador. Si no estan en Datos/Nominal/<Ctrl>/, ubicar() los busca por nombre
+% Nombres exactos de la repeticion 1 de cada controlador. Si no estan en Datos/Nominal_v12/<Ctrl>/, ubicar() los busca por nombre
 % en las subcarpetas de Datos. Tambien se admiten comodines, p. ej. 'Nominal/PID/Datos_PID_rep01_*.txt' (si hay varios, usa el mas reciente).
 D.arch_HIL = {'Nominal_v12/PID/Datos_PID_rep01_20261113_050913.txt', 'Nominal_v12/Fuzzy/Datos_FUZZY_rep01_20261113_013318.txt', 'Nominal_v12/MPC/Datos_MPC_rep01_20261112_235142.txt'};
-D.arch_SIL = {'Simulink_diseno/pid_run22_flat.mat', 'Simulink_diseno/fuzzy_run23_flat.mat', 'Simulink_diseno/mpc_run30_flat.mat'};
-D.arch_FIS = fullfile('..', 'Controladores', 'fuzzy', 'fis_tpsep_1block.fis');   % relativo a Datos/
+D.arch_SIL = {'Modelo_v12/pid_esc1_v12A_flat.mat', 'Modelo_v12/fuzzy_esc1_v12A_flat.mat', 'Modelo_v12/mpc_esc1_v12A_flat.mat'};   % simulacion con el modelo corregido (solo F05)
+D.arch_FIS = fullfile('..', 'Controladores', 'Fuzzy', 'fis_tpsep_1block.fis');   % relativo a Datos/
 
 % F11: cortes con retiro real del cable (un Datos y un Diag_Com por controlador, en el orden PID, Fuzzy, MPC)
 D.arch_corte      = {'Reconexion_v12/Cable_wd2/PID/Datos_PID_20261114_040405.txt', 'Reconexion_v12/Cable_wd2/Fuzzy/Datos_FUZZY_20261114_013001.txt', ...
@@ -250,13 +220,12 @@ if ismember(6, GENERAR)
     end
     yl = ylim(ax1);
     plot(ax1, [D.Ts D.Ts], [1 yl(2)], 'k--', 'LineWidth', 0.8, 'HandleVisibility', 'off');
-    set(ax1, 'YScale', 'log'); xlim(ax1, [0.06 0.16]);
+    set(ax1, 'YScale', 'log'); xlim(ax1, [0 0.45]);
     xlabel(ax1, '\Deltat_{real} [s]'); ylabel(ax1, 'Ciclos');
     leyenda(ax1, 1, 'FontSize', 7);
     if ~isempty(ax2)
         xlabel(ax2, 'Tiempo simulado [s]'); ylabel(ax2, 't_{real} - t_{sim} [s]');
         xlim(ax2, [D.t(1) D.t(end)]);
-        % xlim(ax2, [0.01 0.15]);
     end
     guardar_fig(fig, D, 'F06_tiempo_real.pdf');
 end

@@ -13,7 +13,13 @@ uoff = K.uoff(:);  xoff = K.xoff(:);  RY = K.RYscale(:);  myoff = K.myoff(:);  M
 xlast = K.x0(:);  mvprev = uoff;
 nA = 0; actIdx = zeros(18,1); actLado = zeros(18,1);
 mv_port = zeros(N,3); mv_ref = zeros(N,3); iter = zeros(N,1); conv = false(N,1);
-opt = [];  if exist('quadprog', 'file') == 2 && exist('optimoptions', 'file') == 2, opt = optimoptions('quadprog', 'Display', 'off', 'OptimalityTolerance', 1e-10); end
+opt = [];  usa_quadprog = exist('quadprog', 'file') == 2 && exist('optimoptions', 'file') == 2;
+if usa_quadprog
+    % Algoritmo por defecto de quadprog para este problema (interior-point-convex), declarado de forma explicita
+    opt = optimoptions('quadprog', 'Algorithm', 'interior-point-convex', 'Display', 'off', 'OptimalityTolerance', 1e-10, ...
+                       'ConstraintTolerance', 1e-10, 'StepTolerance', 1e-12, 'MaxIterations', 200);
+end
+flag_ref = zeros(N,1); res_fact = zeros(N,1); res_kkt = zeros(N,1); dz_vec = zeros(N,1); dJ_rel = zeros(N,1); eps_ref = zeros(N,1);
 for k = 1:N
     kk = max(k - desfase, 1);
     y = pv(kk,:)';  r = sp(k,:)';
@@ -36,8 +42,22 @@ for k = 1:N
     mv_port(k,:) = recorte(mvprev + zopt, mvprev, Mlim, uoff)';
     % (b) solucion exacta
     lb = [limInf; -1e6];  ub = [limSup; 1e6];
-    if ~isempty(opt), zr = quadprog(H, f, [], [], [], [], lb, ub, [], opt);
-    else, zr = qp(zeros(19,1), H, f, [], [], lb, ub); end
+    if usa_quadprog
+        [zr, ~, flag_ref(k)] = quadprog(H, f, [], [], [], [], lb, ub, [], opt);
+    else
+        [zr, ~, info] = qp(zeros(19,1), H, f, [], [], lb, ub);  if info.info == 0, flag_ref(k) = 1; else, flag_ref(k) = -info.info; end
+    end
+    % Metricas del vector completo (19 variables)
+    res_fact(k) = max([lb - zr; zr - ub; 0]);
+    g = H*zr + f;  tolb = 1e-9*max(1, max(abs([lb(1:18); ub(1:18)])));
+    enInf = zr <= lb + tolb;  enSup = zr >= ub - tolb;  libre = ~enInf & ~enSup;
+    r = zeros(19,1);  r(libre) = abs(g(libre));  r(enInf) = max(-g(enInf), 0);  r(enSup) = max(g(enSup), 0);
+    res_kkt(k) = max(r) / max(1, max(abs(f)));
+    zqp = min(max(zq(1:18), limInf), limSup);  zqp = [zqp; zq(19)];
+    dz_vec(k) = max(abs(zq(1:18) - zr(1:18)));
+    Jq = 0.5*(zqp'*H*zqp) + f'*zqp;  Jr = 0.5*(zr'*H*zr) + f'*zr;
+    dJ_rel(k) = (Jq - Jr) / max(1, abs(Jr));
+    eps_ref(k) = abs(zr(19));
     mv_ref(k,:) = recorte(mvprev + min(max(zr(1:3), limInf(1:3)), limSup(1:3)), mvprev, Mlim, uoff)';
     % el estimador avanza con la apertura que aplico el PLC (registrada), para que ambas soluciones resuelvan el mismo QP
     mv = cvlog(k,:)';  u = mv - uoff;
@@ -46,12 +66,21 @@ for k = 1:N
 end
 R.err_port = max(abs(mv_port - cvlog), [], 2);  R.err_ref = max(abs(mv_ref - cvlog), [], 2);  R.dif_sol = max(abs(mv_port - mv_ref), [], 2);
 R.iter = iter;  R.n_tope = sum(~conv);  R.mv_port = mv_port;  R.mv_ref = mv_ref;
+% Referencia aceptada: quadprog con exitflag > 0 (1 o 2); qp de Octave con info = 0 (convexo, factible, minimo global)
+okr = flag_ref > 0;  R.flag_ref = flag_ref;  R.n_noconv_ref = sum(~okr);
+R.res_fact = res_fact;  R.res_kkt = res_kkt;  R.dz_vec = dz_vec;  R.dJ_rel = dJ_rel;  R.eps_max = max(eps_ref(okr));  R.conv = conv;
 fprintf('%s | %d ciclos | desfase %d\n', archivo_datos, N, desfase);
 fprintf('  Conjunto activo del SCL frente al cv registrado: error maximo %.2e, percentil 99 %.2e (fraccion de apertura)\n', max(R.err_port), prctile_(R.err_port, 99));
 fprintf('  Solucionador exacto frente al cv registrado:     error maximo %.2e, percentil 99 %.2e\n', max(R.err_ref), prctile_(R.err_ref, 99));
 fprintf('  Conjunto activo frente al exacto:                error maximo %.2e; ciclos con diferencia > 1e-4: %d\n', max(R.dif_sol), sum(R.dif_sol > 1e-4));
 fprintf('  Ciclos que alcanzaron el tope de 6 iteraciones: %d de %d (%.2f %%) | maximo de iteraciones usadas: %d\n', R.n_tope, N, 100*R.n_tope/N, max(iter));
 if R.n_tope > 0, fprintf('  En los ciclos con tope: diferencia maxima frente al exacto %.2e\n', max(R.dif_sol(~conv))); end
+if usa_quadprog, nombre = 'quadprog (interior-point-convex)'; else, nombre = 'qp de Octave'; end
+fprintf('  Referencia %s: ciclos sin terminacion correcta %d (excluidos de lo que sigue)\n', nombre, R.n_noconv_ref);
+fprintf('  Referencia: violacion maxima de cotas %.2e | residuo KKT relativo maximo %.2e | holgura maxima %.2e\n', max(res_fact(okr)), max(res_kkt(okr)), R.eps_max);
+c = okr & conv;  t = okr & ~conv;
+fprintf('  Vector completo, ciclos sin tope (%d): |z_activo - z_ref| maximo %.2e | diferencia relativa de costo maxima %.2e\n', sum(c), max([dz_vec(c); 0]), max([abs(dJ_rel(c)); 0]));
+if any(t), fprintf('  Vector completo, ciclos con tope (%d): |z_activo - z_ref| maximo %.2e | aumento relativo de costo maximo %.2e\n', sum(t), max(dz_vec(t)), max(dJ_rel(t))); end
 end
 
 function [zq, iterQP, convergio, nA, actIdx, actLado] = activo_scl(Hinv, zs, limInf, limSup, nA, actIdx, actLado)
