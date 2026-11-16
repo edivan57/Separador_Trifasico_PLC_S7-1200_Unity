@@ -1,0 +1,2 @@
+Controlador,IAE Hw Simulink,IAE Ho Simulink,IAE Pg Simulink,dIAE Hw [%],dIAE Ho [%],dIAE Pg [%],max|dtr| [s],max|dts| [s],max|dMp| [pts],Escalon de mayor dts,TV uw Simulink,TV uo Simulink,TV ug Simulink,TV uw CPU,TV uo CPU,TV ug CPU
+"MPC",7.48831,2.96061,759.121,-0.879876,3.10684,0.000278665,1.6,0.1,0.00139453,"400 s, H_w [ft]",492.135,189.225,480.76,494.282,192.799,481.162

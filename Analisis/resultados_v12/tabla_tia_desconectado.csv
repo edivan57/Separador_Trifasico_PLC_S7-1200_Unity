@@ -1,0 +1,3 @@
+Controlador,Condicion,Repeticiones,Jitter [ms],p99 dt [ms],Max dt [ms],Lectura media [ms],Lectura p99 [ms],Escritura media [ms],Escritura p99 [ms],Latencia media [ms],Latencia p99 [ms],Ciclos no leidos,Ciclos retenidos
+"MPC","desconectado",2,5.91591,111.2,124.4,13.2985,20.567,12.3091,15.516,87.6633,98.572,0,1
+"MPC","en linea",2,15.4374,136.851,163.1,29.9035,55.7329,25.5379,47.6162,74.4447,122.401,0,4

@@ -1,0 +1,10 @@
+Indicador,PID,Fuzzy,MPC
+"Ciclos del PLC analizados",50000,50004,50003
+"Ciclos no leidos por Unity",2,0,0
+"Lectura S7, media [ms]",10.2023,11.9398,13.4311
+"Lectura S7, p99 [ms]",13.207,17.547,21.3507
+"Escritura S7, media [ms]",12.4053,12.4619,12.5048
+"Escritura S7, p99 [ms]",15.7481,15.7042,15.666
+"Latencia del lazo, media [ms]",87.5703,87.5104,87.4663
+"Latencia del lazo, p99 [ms]",99.797,98.654,98.429
+"Latencia del lazo, p95 [ms]",95.6143,95.0681,95.907

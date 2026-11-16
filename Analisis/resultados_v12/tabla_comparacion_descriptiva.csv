@@ -1,0 +1,5 @@
+Controlador,Prueba,H_w [%],H_o [%],P_g [%]
+"Fuzzy","Completa",-6.67116,-48.2637,1.05589
+"Fuzzy","Sin arranque",-4.30197,-45.9273,0.17928
+"MPC","Completa",45.1563,109.169,0.477016
+"MPC","Sin arranque",57.347,121.256,0.568174

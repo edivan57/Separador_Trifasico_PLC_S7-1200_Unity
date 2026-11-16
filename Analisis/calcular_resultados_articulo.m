@@ -3,10 +3,12 @@ function calcular_resultados_articulo(varargin)
 
 C = configuracion();
 for i = 1:2:numel(varargin), C.(varargin{i}) = varargin{i+1}; end
+C = ubicar_repositorio(C, varargin);   % encuentra Datos/ aunque MATLAB este en otra carpeta
 if ~exist(C.carpeta_salida, 'dir'), mkdir(C.carpeta_salida); end
 RES = struct();
 fprintf('\n=== Resultados del articulo: calculo a partir de los registros ===\n');
 fprintf('Carpeta de datos: %s\nCarpeta de salida: %s\n', C.carpeta_datos, C.carpeta_salida);
+revisar_archivos(C);                    % lista los registros que faltan antes de calcular
 
 %% 1) Campana nominal ---------------------------------------------------------------------------------
 N = struct();
@@ -1045,4 +1047,63 @@ for i = 1:size(filas, 1)
     fprintf(fid, '%s\n', strjoin(p, ','));
 end
 fclose(fid);
+end
+
+%% ===================================== UBICACION DE LOS DATOS =======================================
+function C = ubicar_repositorio(C, args)
+% Si no se indica 'carpeta_datos', prueba la carpeta actual de MATLAB y la raiz del repositorio (la carpeta que
+% contiene a Analisis/, donde esta este archivo). Se acepta la primera que tenga la carpeta nominal del modelo elegido.
+nombres = args(1:2:end);
+dada_d = any(strcmpi(nombres, 'carpeta_datos'));  dada_s = any(strcmpi(nombres, 'carpeta_salida'));
+clave = fileparts(fileparts(C.arch.nominal.PID));          % 'Nominal_v12' (o 'Nominal' con el modelo v11)
+if dada_d
+    if exist(fullfile(C.carpeta_datos, clave), 'dir') ~= 7
+        error('No existe la carpeta %s dentro de la carpeta de datos indicada: %s', clave, C.carpeta_datos);
+    end
+    return
+end
+raiz_script = fileparts(fileparts(mfilename('fullpath')));
+cand = {pwd, raiz_script};  raiz = '';
+for k = 1:numel(cand)
+    if exist(fullfile(cand{k}, 'Datos', clave), 'dir') == 7, raiz = cand{k}; break; end
+end
+if isempty(raiz)
+    error(['No se encontro la carpeta Datos/%s.\n' ...
+           '  Carpeta actual de MATLAB: %s\n  Raiz supuesta del repositorio (carpeta padre de este script): %s\n' ...
+           'Ejecute la copia del script que esta en la carpeta Analisis/ del repositorio clonado, o indique la ruta:\n' ...
+           '  calcular_resultados_articulo(''carpeta_datos'', ''<raiz del repositorio>/Datos'')'], clave, pwd, raiz_script);
+end
+C.carpeta_datos = fullfile(raiz, 'Datos');
+if ~dada_s, C.carpeta_salida = fullfile(raiz, 'Analisis', C.carpeta_salida); end
+end
+
+function revisar_archivos(C)
+% Lista los patrones de C.arch sin ningun archivo. Los casos de fallas y reconexion se expanden por controlador.
+falta = {};
+cs = fieldnames(C.arch);
+for i = 1:numel(cs)
+    v = C.arch.(cs{i});
+    if isstruct(v)
+        sub = fieldnames(v);
+        for j = 1:numel(sub), p = v.(sub{j}); if isempty(buscar(C, p)), falta{end+1} = p; end, end %#ok<AGROW>
+    elseif ischar(v) && isempty(strfind(v, '%'))
+        if isempty(buscar(C, v)), falta{end+1} = v; end %#ok<AGROW>
+    end
+end
+for c = 1:3
+    for n = C.casos_falla
+        p = sprintf(C.arch.fallas, C.carp.(C.ctrl{c}), C.ctrl{c}, n); if isempty(buscar(C, p)), falta{end+1} = p; end %#ok<AGROW>
+    end
+    for k = 1:numel(C.recon_casos)
+        p = sprintf(C.arch.recon_datos, C.recon_casos{k}, C.carp.(C.ctrl{c}), C.ctrl{c}); if isempty(buscar(C, p)), falta{end+1} = p; end %#ok<AGROW>
+    end
+end
+opcional = ~cellfun(@isempty, regexp(falta, '^(Nominal_sesion1/|TIA Desconectado/(PID|Fuzzy)/)', 'once'));   % opcionales: primera sesion y TIA del PID y el Fuzzy
+falta_req = falta(~opcional);
+if isempty(falta_req)
+    fprintf('Comprobacion de archivos: estan todos los registros que usa el articulo.\n');
+else
+    fprintf('Comprobacion de archivos: faltan %d (las tablas que los usan se omiten):\n', numel(falta_req));
+    fprintf('  Datos/%s\n', falta_req{:});
+end
 end

@@ -1,0 +1,4 @@
+Caso,Controlador,Inicio corte t_sim [s],Pasos sin accion,Ciclos PLC en el corte,Ciclos retenidos (wd=2),Salto uw/uo/ug [pts],dIAE Hw/Ho/Pg [%],dTV uw/uo/ug,Desv.max Hw/Ho [ft],Desv.max Pg [psi],Recuperacion [s],Salto t_real max [s],Diag_HIL t medio/max [ms]
+Cable_wd2,PID,385.7,102,103,101,0/0/0,0.00/0.00/0.00,0.0/0.0/0.0,0.0000/0.0000,0.0000,0,2.04,0.0699/0.0987
+Cable_wd2,Fuzzy,385.4,102,103,101,0/0/0,0.00/0.00/0.00,-2.1/0.3/0.1,0.0000/0.0000,0.0002,0,2.04,3.952/18.79
+Cable_wd2,MPC,385.5,103,104,102,0/0/0,0.00/0.00/0.00,0.0/0.0/0.0,0.0000/0.0000,0.0001,0,2.11,6.058/28.45

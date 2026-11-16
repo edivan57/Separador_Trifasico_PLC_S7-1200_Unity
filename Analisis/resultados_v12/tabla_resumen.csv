@@ -1,0 +1,6 @@
+Metrica,PID,Fuzzy,MPC
+"ts medio de los escalones [s]",36.9444,36.3889,51.5667
+"Mp maximo [%]",36.992,1.328,2.273
+"TV total [%]",1408.81,1062.71,1168.24
+"Tiempo de ejecucion medio [ms] (configuracion)",0.0722,3.928,6.057
+"Tiempo de ejecucion maximo [ms] (configuracion)",0.106,18.95,28.55
