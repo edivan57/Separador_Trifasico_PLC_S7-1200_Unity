@@ -66,4 +66,3 @@ La relación completa figura o tabla → registro → script → ventana está e
 6. `comparar_modelos_v12` para la tabla del efecto del modelo.
 7. `generar_figuras_articulo_n`, en MATLAB.
 
-No subir: corridas `*_viejo_flat.mat`, copias con sufijo `_1` y los `comparacion_modelo_v12_*.csv` intermedios.
