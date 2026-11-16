@@ -18,7 +18,7 @@ abstract: >-
 license: MIT
 version: "3.0.0"
 date-released: "2026-11-16"
-# doi: 10.5281/zenodo.24284441
+doi: 10.5281/zenodo.24284441
 
 keywords:
   - hardware-in-the-loop
