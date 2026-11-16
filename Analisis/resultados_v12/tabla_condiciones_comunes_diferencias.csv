@@ -1,0 +1,5 @@
+Condiciones,Controlador,dIAE Hw [%],dIAE Ho [%],dIAE Pg [%],dIAE Hw sin arranque [%],dIAE Ho sin arranque [%],dIAE Pg sin arranque [%]
+"condiciones actuales","Fuzzy",-6.67822,-48.2542,1.05609,-4.30288,-45.9217,0.179312
+"condiciones actuales","MPC",46.4437,102.882,0.476287,59.2701,114.495,0.566792
+"condiciones comunes","Fuzzy",-1.14612,-33.8877,0.218297,-2.71563,-27.6043,0.22357
+"condiciones comunes","MPC",44.8984,101.181,-0.50742,56.5756,110.757,-0.441822
