@@ -4,6 +4,9 @@ function calcular_resultados_articulo(varargin)
 C = configuracion();
 for i = 1:2:numel(varargin), C.(varargin{i}) = varargin{i+1}; end
 C = ubicar_repositorio(C, varargin);   % encuentra Datos/ aunque MATLAB este en otra carpeta
+if exist(fullfile(C.carpeta_datos, 'mpc_1212C'), 'dir') ~= 7 && exist(fullfile(C.carpeta_datos, 'MPC_1212C'), 'dir') == 7
+    C.arch.mpc_1212c = 'MPC_1212C/Datos_*.txt';   % la carpeta con mayusculas tambien vale (Linux y Mac distinguen)
+end
 if ~exist(C.carpeta_salida, 'dir'), mkdir(C.carpeta_salida); end
 RES = struct();
 fprintf('\n=== Resultados del articulo: calculo a partir de los registros ===\n');
@@ -98,7 +101,7 @@ C.arch.comun        = struct('PID','Simulink_diseno/pid_run23_flat.mat','FUZZY',
 C.arch.escenario2   = struct('PID','Simulink_diseno/pid_run25_flat.mat','FUZZY','Simulink_diseno/fuzzy_run25_flat.mat','MPC','Simulink_diseno/mpc_run15_flat.mat','MPC_P100','Simulink_diseno/mpc_run18_flat.mat','MPC_P50','Simulink_diseno/mpc_run14_flat.mat','PID_comun','Simulink_diseno/pid_run27_flat.mat','FUZZY_comun','Simulink_diseno/fuzzy_run27_flat.mat');   % escenario 2 (Escenario_Trifasico_2.m)
 C.arch.atribucion    = struct('PID_arranque','Simulink_diseno/pid_run28_flat.mat','PID_limites','Simulink_diseno/pid_run29_flat.mat','FUZZY_arranque','Simulink_diseno/fuzzy_run28_flat.mat','FUZZY_limites','Simulink_diseno/fuzzy_run29_flat.mat');   % un solo cambio a la vez, escenario original
 C.arch.horizonte    = struct('P50','Simulink_diseno/mpc_run16_flat.mat','P100','Simulink_diseno/mpc_run17_flat.mat');   % P = 200 es C.arch.diseno.MPC
-C.arch.mpc_1212c    = 'MPC_1212C/Datos_*.txt';          % corridas del MPC completo (y reducido) en la CPU 1212C
+C.arch.mpc_1212c    = 'mpc_1212C/Datos_*.txt';          % corridas del MPC completo (y reducido) en la CPU 1212C
 if strcmp(C.modelo_planta, 'v12')   % corridas de Simulink con el modelo corregido (correr_comparacion_v12): Datos/Modelo_v12/
     m = 'Modelo_v12/';
     C.arch.diseno     = struct('PID',[m 'pid_esc1_v12A_flat.mat'],'FUZZY',[m 'fuzzy_esc1_v12A_flat.mat'],'MPC',[m 'mpc_esc1_v12A_flat.mat']);

@@ -1,54 +1,53 @@
-Salida de contrastar_qp_cotas_todas.m con GNU Octave 8.4.0 (referencia: qp, conjunto activo en el espacio nulo, MaxIter 200, TolX sqrt(eps))
-
-Datos/Nominal_v12/MPC/Datos_MPC_rep01_20261112_235142.txt | 10000 ciclos | desfase 0
+T = contrastar_qp_cotas_todas();
+Datos\Nominal_v12\MPC\Datos_MPC_rep01_20261112_235142.txt | 10000 ciclos | desfase 0
   Conjunto activo del SCL frente al cv registrado: error maximo 7.24e-05, percentil 99 4.02e-05 (fraccion de apertura)
-  Solucionador exacto frente al cv registrado:     error maximo 1.22e-02, percentil 99 4.05e-05
-  Conjunto activo frente al exacto:                error maximo 1.22e-02; ciclos con diferencia > 1e-4: 8
+  Referencia frente al cv registrado:              error maximo 1.22e-02, percentil 99 4.05e-05
+  Conjunto activo frente a la referencia:          error maximo 1.22e-02; ciclos con diferencia > 1e-4: 8
   Ciclos que alcanzaron el tope de 6 iteraciones: 9 de 10000 (0.09 %) | maximo de iteraciones usadas: 6
-  En los ciclos con tope: diferencia maxima frente al exacto 1.22e-02
-  Referencia qp de Octave: ciclos sin terminacion correcta 0 (excluidos de lo que sigue)
-  Referencia: violacion maxima de cotas 1.73e-17 | residuo KKT relativo maximo 1.51e-13 | holgura maxima 0.00e+00
-  Vector completo, ciclos sin tope (9991): |z_activo - z_ref| maximo 2.94e-14 | diferencia relativa de costo maxima 1.23e-13
+  En los ciclos con tope: diferencia maxima frente a la referencia 1.22e-02
+  Referencia quadprog (interior-point-convex): codigos de salida 1 (10000 ciclos) | aceptados 10000 de 10000
+  Referencia: incumplimiento maximo de cotas 1.75e-12 | optimalidad de primer orden (firstorderopt) maxima 1.90e-07 | iteraciones maximas 14 | holgura maxima 0.00e+00
+  Vector completo, ciclos sin tope (9991): |z_activo - z_ref| maximo 1.72e-06 | diferencia relativa de costo maxima 9.85e-10
   Vector completo, ciclos con tope (9): |z_activo - z_ref| maximo 1.79e+00 | aumento relativo de costo maximo 5.22e-01
-Datos/Nominal_v12/MPC/Datos_MPC_rep02_20261113_000825.txt | 10000 ciclos | desfase 0
+Datos\Nominal_v12\MPC\Datos_MPC_rep02_20261113_000825.txt | 10000 ciclos | desfase 0
   Conjunto activo del SCL frente al cv registrado: error maximo 7.24e-05, percentil 99 4.02e-05 (fraccion de apertura)
-  Solucionador exacto frente al cv registrado:     error maximo 1.22e-02, percentil 99 4.05e-05
-  Conjunto activo frente al exacto:                error maximo 1.22e-02; ciclos con diferencia > 1e-4: 8
+  Referencia frente al cv registrado:              error maximo 1.22e-02, percentil 99 4.05e-05
+  Conjunto activo frente a la referencia:          error maximo 1.22e-02; ciclos con diferencia > 1e-4: 8
   Ciclos que alcanzaron el tope de 6 iteraciones: 9 de 10000 (0.09 %) | maximo de iteraciones usadas: 6
-  En los ciclos con tope: diferencia maxima frente al exacto 1.22e-02
-  Referencia qp de Octave: ciclos sin terminacion correcta 0 (excluidos de lo que sigue)
-  Referencia: violacion maxima de cotas 1.73e-17 | residuo KKT relativo maximo 1.51e-13 | holgura maxima 0.00e+00
-  Vector completo, ciclos sin tope (9991): |z_activo - z_ref| maximo 2.94e-14 | diferencia relativa de costo maxima 1.23e-13
+  En los ciclos con tope: diferencia maxima frente a la referencia 1.22e-02
+  Referencia quadprog (interior-point-convex): codigos de salida 1 (10000 ciclos) | aceptados 10000 de 10000
+  Referencia: incumplimiento maximo de cotas 1.75e-12 | optimalidad de primer orden (firstorderopt) maxima 1.90e-07 | iteraciones maximas 14 | holgura maxima 0.00e+00
+  Vector completo, ciclos sin tope (9991): |z_activo - z_ref| maximo 1.72e-06 | diferencia relativa de costo maxima 9.85e-10
   Vector completo, ciclos con tope (9): |z_activo - z_ref| maximo 1.79e+00 | aumento relativo de costo maximo 5.22e-01
-Datos/Nominal_v12/MPC/Datos_MPC_rep03_20261113_002508.txt | 10000 ciclos | desfase 0
+Datos\Nominal_v12\MPC\Datos_MPC_rep03_20261113_002508.txt | 10000 ciclos | desfase 0
   Conjunto activo del SCL frente al cv registrado: error maximo 7.24e-05, percentil 99 4.02e-05 (fraccion de apertura)
-  Solucionador exacto frente al cv registrado:     error maximo 1.22e-02, percentil 99 4.05e-05
-  Conjunto activo frente al exacto:                error maximo 1.22e-02; ciclos con diferencia > 1e-4: 8
+  Referencia frente al cv registrado:              error maximo 1.22e-02, percentil 99 4.05e-05
+  Conjunto activo frente a la referencia:          error maximo 1.22e-02; ciclos con diferencia > 1e-4: 8
   Ciclos que alcanzaron el tope de 6 iteraciones: 9 de 10000 (0.09 %) | maximo de iteraciones usadas: 6
-  En los ciclos con tope: diferencia maxima frente al exacto 1.22e-02
-  Referencia qp de Octave: ciclos sin terminacion correcta 0 (excluidos de lo que sigue)
-  Referencia: violacion maxima de cotas 1.73e-17 | residuo KKT relativo maximo 1.51e-13 | holgura maxima 0.00e+00
-  Vector completo, ciclos sin tope (9991): |z_activo - z_ref| maximo 2.94e-14 | diferencia relativa de costo maxima 1.23e-13
+  En los ciclos con tope: diferencia maxima frente a la referencia 1.22e-02
+  Referencia quadprog (interior-point-convex): codigos de salida 1 (10000 ciclos) | aceptados 10000 de 10000
+  Referencia: incumplimiento maximo de cotas 1.75e-12 | optimalidad de primer orden (firstorderopt) maxima 1.90e-07 | iteraciones maximas 14 | holgura maxima 0.00e+00
+  Vector completo, ciclos sin tope (9991): |z_activo - z_ref| maximo 1.72e-06 | diferencia relativa de costo maxima 9.85e-10
   Vector completo, ciclos con tope (9): |z_activo - z_ref| maximo 1.79e+00 | aumento relativo de costo maximo 5.22e-01
-Datos/Nominal_v12/MPC/Datos_MPC_rep04_20261113_004151.txt | 10000 ciclos | desfase 0
+Datos\Nominal_v12\MPC\Datos_MPC_rep04_20261113_004151.txt | 10000 ciclos | desfase 0
   Conjunto activo del SCL frente al cv registrado: error maximo 7.24e-05, percentil 99 4.02e-05 (fraccion de apertura)
-  Solucionador exacto frente al cv registrado:     error maximo 1.22e-02, percentil 99 4.05e-05
-  Conjunto activo frente al exacto:                error maximo 1.22e-02; ciclos con diferencia > 1e-4: 8
+  Referencia frente al cv registrado:              error maximo 1.22e-02, percentil 99 4.05e-05
+  Conjunto activo frente a la referencia:          error maximo 1.22e-02; ciclos con diferencia > 1e-4: 8
   Ciclos que alcanzaron el tope de 6 iteraciones: 9 de 10000 (0.09 %) | maximo de iteraciones usadas: 6
-  En los ciclos con tope: diferencia maxima frente al exacto 1.22e-02
-  Referencia qp de Octave: ciclos sin terminacion correcta 0 (excluidos de lo que sigue)
-  Referencia: violacion maxima de cotas 1.73e-17 | residuo KKT relativo maximo 1.51e-13 | holgura maxima 0.00e+00
-  Vector completo, ciclos sin tope (9991): |z_activo - z_ref| maximo 2.94e-14 | diferencia relativa de costo maxima 1.23e-13
+  En los ciclos con tope: diferencia maxima frente a la referencia 1.22e-02
+  Referencia quadprog (interior-point-convex): codigos de salida 1 (10000 ciclos) | aceptados 10000 de 10000
+  Referencia: incumplimiento maximo de cotas 1.75e-12 | optimalidad de primer orden (firstorderopt) maxima 1.90e-07 | iteraciones maximas 14 | holgura maxima 0.00e+00
+  Vector completo, ciclos sin tope (9991): |z_activo - z_ref| maximo 1.72e-06 | diferencia relativa de costo maxima 9.85e-10
   Vector completo, ciclos con tope (9): |z_activo - z_ref| maximo 1.79e+00 | aumento relativo de costo maximo 5.22e-01
-Datos/Nominal_v12/MPC/Datos_MPC_rep05_20261113_005835.txt | 10000 ciclos | desfase 0
+Datos\Nominal_v12\MPC\Datos_MPC_rep05_20261113_005835.txt | 10000 ciclos | desfase 0
   Conjunto activo del SCL frente al cv registrado: error maximo 7.24e-05, percentil 99 4.02e-05 (fraccion de apertura)
-  Solucionador exacto frente al cv registrado:     error maximo 1.22e-02, percentil 99 4.05e-05
-  Conjunto activo frente al exacto:                error maximo 1.22e-02; ciclos con diferencia > 1e-4: 8
+  Referencia frente al cv registrado:              error maximo 1.22e-02, percentil 99 4.05e-05
+  Conjunto activo frente a la referencia:          error maximo 1.22e-02; ciclos con diferencia > 1e-4: 8
   Ciclos que alcanzaron el tope de 6 iteraciones: 9 de 10000 (0.09 %) | maximo de iteraciones usadas: 6
-  En los ciclos con tope: diferencia maxima frente al exacto 1.22e-02
-  Referencia qp de Octave: ciclos sin terminacion correcta 0 (excluidos de lo que sigue)
-  Referencia: violacion maxima de cotas 1.73e-17 | residuo KKT relativo maximo 1.51e-13 | holgura maxima 0.00e+00
-  Vector completo, ciclos sin tope (9991): |z_activo - z_ref| maximo 2.94e-14 | diferencia relativa de costo maxima 1.23e-13
+  En los ciclos con tope: diferencia maxima frente a la referencia 1.22e-02
+  Referencia quadprog (interior-point-convex): codigos de salida 1 (10000 ciclos) | aceptados 10000 de 10000
+  Referencia: incumplimiento maximo de cotas 1.75e-12 | optimalidad de primer orden (firstorderopt) maxima 1.90e-07 | iteraciones maximas 14 | holgura maxima 0.00e+00
+  Vector completo, ciclos sin tope (9991): |z_activo - z_ref| maximo 1.72e-06 | diferencia relativa de costo maxima 9.85e-10
   Vector completo, ciclos con tope (9): |z_activo - z_ref| maximo 1.79e+00 | aumento relativo de costo maximo 5.22e-01
 
 ===== RESUMEN DE 5 REPETICIONES =====
@@ -59,15 +58,26 @@ Rep.     Ciclos     Err. max     Err>1e-3       Dif>1e-4     Tope     Dif. max
 4         10000     7.24e-05            0              8        9     1.22e-02
 5         10000     7.24e-05            0              8        9     1.22e-02
 Total: 50000 ciclos | el conjunto activo reproduce el cv registrado (error <= 1e-3) en 100.00 % de los ciclos
-       ciclos con diferencia > 1e-4 entre el conjunto activo y el exacto: 40 (0.08 %) | ciclos al tope de 6 iteraciones: 45 (0.09 %) | diferencia maxima 1.22e-02 = 1.2 puntos de apertura
+       ciclos con diferencia > 1e-4 entre el conjunto activo y la referencia: 40 (0.08 %) | ciclos al tope de 6 iteraciones: 45 (0.09 %) | diferencia maxima 1.22e-02 = 1.2 puntos de apertura
 
 ===== VECTOR COMPLETO (19 variables) =====
-Rep.     Ref. mal  Viol. cotas     Res. KKT    dz sin tope  dJ sin tope    Holgura    dJ con tope
-1               0     1.73e-17     1.51e-13       2.94e-14     1.23e-13   0.00e+00       5.22e-01
-2               0     1.73e-17     1.51e-13       2.94e-14     1.23e-13   0.00e+00       5.22e-01
-3               0     1.73e-17     1.51e-13       2.94e-14     1.23e-13   0.00e+00       5.22e-01
-4               0     1.73e-17     1.51e-13       2.94e-14     1.23e-13   0.00e+00       5.22e-01
-5               0     1.73e-17     1.51e-13       2.94e-14     1.23e-13   0.00e+00       5.22e-01
-Total: referencia sin terminacion correcta en 0 ciclos | violacion de cotas maxima 1.73e-17 | residuo KKT relativo maximo 1.51e-13 | holgura maxima 0.00e+00
-       ciclos sin tope: |z_activo - z_ref| maximo 2.94e-14 en los 18 movimientos, diferencia relativa de costo maxima 1.23e-13
-       ciclos con tope: aumento relativo de costo maximo 5.22e-01
+Rep.     Ref. mal     Incumpl.  Optimalidad    dz sin tope  dJ sin tope    Holgura    dJ con tope    Iter.
+1               0     1.75e-12     1.90e-07       1.72e-06     9.85e-10   0.00e+00       5.22e-01       14
+2               0     1.75e-12     1.90e-07       1.72e-06     9.85e-10   0.00e+00       5.22e-01       14
+3               0     1.75e-12     1.90e-07       1.72e-06     9.85e-10   0.00e+00       5.22e-01       14
+4               0     1.75e-12     1.90e-07       1.72e-06     9.85e-10   0.00e+00       5.22e-01       14
+5               0     1.75e-12     1.90e-07       1.72e-06     9.85e-10   0.00e+00       5.22e-01       14
+
+===== CIFRAS PARA EL ARTICULO =====
+Programa: MATLAB 24.1.0.2537033 (R2024a) | Optimization Toolbox 24.1
+Solucionador de referencia: quadprog (interior-point-convex) | OptimalityTolerance 1e-10, ConstraintTolerance 1e-10, StepTolerance 1e-12, MaxIterations 200, holgura libre
+Codigos de salida de la referencia: 1 en 50000 ciclos; 
+Ciclos con la referencia no aceptada (codigo <= 0): 0 de 50000
+Mayor incumplimiento de cotas de la referencia: 1.75e-12
+Mayor optimalidad de primer orden (firstorderopt) de la referencia: 1.90e-07 | iteraciones maximas: 14
+Holgura maxima de la referencia: 0.00e+00
+Conjunto activo frente a la apertura registrada: error maximo 7.24e-05 (fraccion de apertura)
+Ciclos sin tope: 49955 | |z_activo - z_ref| maximo en los 18 movimientos 1.72e-06 | diferencia relativa de costo maxima 9.85e-10
+Ciclos con tope: 45 (0.09 %) | aumento relativo de costo maximo 5.22e-01
+Primer movimiento: ciclos con diferencia > 1e-4: 40 (con tope 40, sin tope 0) | diferencia maxima 1.22e-02 = 1.2 puntos de apertura
+diary off
