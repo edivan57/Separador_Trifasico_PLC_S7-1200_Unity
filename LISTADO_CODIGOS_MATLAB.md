@@ -1,4 +1,4 @@
-# Códigos de MATLAB del artículo (versión 3.1.1)
+# Códigos de MATLAB del artículo (versión 3.1.2)
 
 De qué script y de qué registros sale cada resultado del artículo, y el orden para reproducirlos. Las carpetas son las
 del repositorio. Desde la versión 3.0.0, la planta de todas las campañas es el modelo corregido `tpsep_v12.m`; el
@@ -26,7 +26,7 @@ modelo de referencia (`tpsep_v11.m`) se conserva para la comparación entre mode
 | `Analisis/` | `comparar_modelos_v12.m` | Modelo de referencia frente al corregido con las mismas sintonías (IAE, $M_p$, $t_s$, saturación y variación total) | Corridas `*_esc1_v11`, `_v12A` y `_v12B` |
 | `Analisis/` | `comparar_hil_simulink.m` | Corrida de la CPU frente a la de Simulink con el mismo controlador | Una corrida de cada plataforma |
 | `Analisis/` | `cronograma_escenario2.m`, `eventos_escenario2.m`, `probar_escenario2.m` | Cronograma, eventos y pruebas del segundo escenario (tercer argumento `'v12'`) | `Escenario_Trifasico_2.m` y las corridas `*_esc2_v12A*` |
-| `Analisis/` | `contrastar_qp_cotas.m`, `contrastar_qp_cotas_todas.m` | QP del SCL de cotas frente a una solución numérica de referencia (`qp` de Octave 8.4, conjunto activo, o `quadprog` *interior-point-convex* en MATLAB). Desde la 3.0.1 informan además el código de terminación de la referencia, la violación de cotas, el residuo KKT, la holgura y, en el vector completo de 18 movimientos, la diferencia de solución y de costo. Por omisión usan `Datos/Nominal_v12/MPC` | `qp` de Octave o `quadprog` |
+| `Analisis/` | `contrastar_qp_cotas.m`, `contrastar_qp_cotas_todas.m` | QP del SCL de cotas frente a una solución numérica de referencia: `quadprog` de MATLAB (*interior-point-convex*, holgura libre), del que salen las cifras del artículo, o `qp` de GNU Octave (conjunto activo). Informan el código de salida de la referencia, el mayor incumplimiento de cotas, la optimalidad de primer orden (en Octave, el residuo de gradiente proyectado), las iteraciones, la holgura y, en el vector completo de 18 movimientos, la diferencia de solución y de costo. Por omisión usan `Datos/Nominal_v12/MPC` | `quadprog` (Optimization Toolbox) en MATLAB o `qp` en Octave |
 | `Analisis/` | `generar_figuras_articulo_n.m` | Figuras con los registros de la versión 3.0.0 | MATLAB R2018a o posterior |
 | `Analisis/resultados_v12/` | `*.csv`, `salida_calcular_resultados_v12.txt`, `salida_contrastar_qp_cotas_v12.txt` | Tablas y salidas que dan los scripts, tal como entran en el artículo. `tabla_un_solo_cambio.csv` y `tabla_condiciones_comunes.csv` son la tabla de sensibilidad, toda en Simulink | — |
 
@@ -62,7 +62,7 @@ La relación completa figura o tabla → registro → script → ventana está e
 2. `reproducir_replicas_v12` y `verificar_modelo_v12`, con `Modelo/Matlab` en la ruta.
 3. `calcular_resultados_articulo`, desde cualquier carpeta: busca `Datos/` en la raíz del repositorio (la carpeta padre de `Analisis/`) y antes de calcular lista los registros que falten. Escribe `Analisis/resultados_v12/*.csv` y `resultados.mat`.
 4. `calcular_ob_plc`, con `Datos/OB_PLC/medir_ob_nominal_20261107.csv`.
-5. `contrastar_qp_cotas_todas`, con `Datos/Nominal_v12/MPC` y `PLC/Simulacion_Trifasico_MPC_v8_M6_caja_S71200.scl`.
+5. `contrastar_qp_cotas_todas`, en MATLAB con Optimization Toolbox, con `Datos/Nominal_v12/MPC` y `PLC/Simulacion_Trifasico_MPC_v8_M6_caja_S71200.scl`. Su salida es `Analisis/resultados_v12/salida_contrastar_qp_cotas_v12.txt`.
 6. `comparar_modelos_v12` para la tabla del efecto del modelo.
 7. `generar_figuras_articulo_n`, en MATLAB.
 

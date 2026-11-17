@@ -78,7 +78,7 @@ El periodo del OB lo fija el PLC y no depende del modelo de la planta. El artíc
    calcular_resultados_articulo
    ```
    El script encuentra `Datos/` por sí solo, avisa si falta algún registro y guarda las tablas en `Analisis/resultados_v12/`.
-3. Desde la raíz del repositorio, `contrastar_qp_cotas_todas` reproduce el contraste del QP y `calcular_ob_plc`, el periodo del OB.
+3. Desde la raíz del repositorio, `contrastar_qp_cotas_todas` reproduce el contraste del QP (en MATLAB necesita Optimization Toolbox) y `calcular_ob_plc`, el periodo del OB.
 
 [`LISTADO_CODIGOS_MATLAB.md`](LISTADO_CODIGOS_MATLAB.md) relaciona cada resultado del artículo con su script y sus registros, y da el orden completo para reproducirlos, incluidas las corridas de Simulink. La Tabla S9 del material suplementario hace lo mismo para cada figura y tabla.
 
@@ -89,14 +89,15 @@ El periodo del OB lo fija el PLC y no depende del modelo de la planta. El artíc
 | PLC | Siemens S7-1200, CPU 1212C AC/DC/Rly (6ES7212-1BE40-0XB0), firmware V4.5.2 (configurado como V4.4) |
 | Ingeniería del PLC | TIA Portal V16 |
 | Simulación de la planta | Unity 2020.3.48f1 (modo *No Throttling*) y la biblioteca Sharp7 (no se incluye; ver su licencia) |
-| MATLAB | R2024a (la de Simulink PLC Coder 24.1) con Simulink, Simulink PLC Coder 24.1 y MPC Toolbox (solo para regenerar controladores y correr simulaciones). Los scripts de `Analisis/` no necesitan toolboxes y funcionan desde R2016b (las figuras, desde R2018a). `contrastar_qp_cotas*.m` usa `qp` en GNU Octave (las cifras del artículo salen de Octave 8.4) o `quadprog` (Optimization Toolbox) en MATLAB |
+| MATLAB | R2024a (la de Simulink PLC Coder 24.1) con Simulink, Simulink PLC Coder 24.1 y MPC Toolbox (solo para regenerar controladores y correr simulaciones). Los scripts de `Analisis/` funcionan desde R2016b (las figuras, desde R2018a) y no necesitan toolboxes, salvo `contrastar_qp_cotas*.m`, que en MATLAB usa `quadprog` (Optimization Toolbox). Las cifras del contraste del QP que da el artículo salen de MATLAB con `quadprog`; en GNU Octave el mismo script usa `qp` |
 
 
 ## Versiones
 
 | Versión | Cambios |
 |---|---|
-| 3.1.1 | Versión que cita el artículo. Añade las corridas de Simulink del PID y del Fuzzy con la planta corregida y la configuración de la CPU y `LISTADO_CODIGOS_MATLAB.md`. (https://doi.org/10.5281/zenodo.24295183)|
+| 3.1.2 | Versión que cita el artículo. El contraste del QP del MPC usa como referencia `quadprog` de MATLAB (*interior-point-convex*, holgura libre) e informa el código de salida, la optimalidad de primer orden y las iteraciones de la referencia; `Analisis/resultados_v12/salida_contrastar_qp_cotas_v12.txt` sale de MATLAB.|
+| 3.1.1 | Añade las corridas de Simulink del PID y del Fuzzy con la planta corregida y la configuración de la CPU, las tablas de sensibilidad que salen de ellas, `LISTADO_CODIGOS_MATLAB.md` (https://doi.org/10.5281/zenodo.24295183) |
 | 3.1.0 | Script de las tablas (`calcular_resultados_articulo.m`, corridas de simulación de `Datos/Modelo_v12/`, MPC completo en la CPU (`Datos/MPC_1212C/`), SCL del MPC reducido, scripts de simulación, del segundo escenario y de verificación (https://doi.org/10.5281/zenodo.24290553) |
 | 3.0.0 | Modelo de la planta corregido (`tpsep_v12.m`). Con ese modelo y los mismos controladores: campañas nominal, de robustez, de cortes (C1, C2 y cable) y de fallas C3 a C5 en la CPU 1212C, todas con `Ciclos_Watchdog = 2` y TIA Portal desconectado (`Datos/*_v12/`); simulaciones del efecto del modelo, de las condiciones comunes, del horizonte de predicción y del segundo escenario (`Datos/Modelo_v12/`). Scripts de simulación y de verificación del modelo corregido; scripts de Unity con la secuencia de fallas y la reconexión tras un corte real (https://doi.org/10.5281/zenodo.24284441) |
 | 2.0.2 | Campañas nominal y de robustez con cinco repeticiones y pausa de 3 s entre repeticiones; sesión alternada con TIA Portal en línea y desconectado; cortes de comunicación con dos lógicas de reconexión (`Ciclos_Watchdog` de 10 y de 2) y cortes con cable; medición del periodo de los OB dentro del PLC (`Medir_OB.scl`); contraste del QP del MPC frente a `quadprog` (https://doi.org/10.5281/zenodo.24069678) |

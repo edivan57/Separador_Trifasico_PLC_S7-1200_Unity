@@ -16,12 +16,15 @@ abstract: >-
   (CPU 1212C) que ejecuta un controlador PID, uno Fuzzy (Mamdani) y un MPC, con el lazo cerrado por Ethernet y
   sincronizado por ciclo del PLC. Desde la versión 3.0.0, la planta es el modelo corregido tpsep_v12.
 license: MIT
-version: "3.1.1"
-date-released: "2026-11-16"
+version: "3.1.2"
+date-released: "2026-11-17"
 identifiers:
   - type: doi
+    value: 10.5281/zenodo.24290553
+    description: "Versión 3.1.0."
+  - type: doi
     value: 10.5281/zenodo.24295183
-    description: "Versión 3.1.1"
+    description: "Versión 3.1.1. La 3.1.2, que cita el artículo, tiene su propio DOI en Zenodo."
 
 keywords:
   - hardware-in-the-loop
