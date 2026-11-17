@@ -20,8 +20,8 @@ version: "3.1.1"
 date-released: "2026-11-16"
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.24290553
-    description: "Versión 3.1.0."
+    value: 10.5281/zenodo.24295183
+    description: "Versión 3.1.1"
 
 keywords:
   - hardware-in-the-loop
