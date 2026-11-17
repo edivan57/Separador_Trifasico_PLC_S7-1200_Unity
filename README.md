@@ -1,5 +1,5 @@
 # Separador trifásico: plataforma Hardware-in-the-Loop con PLC S7-1200 y Unity
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24295183.svg)](https://doi.org/10.5281/zenodo.24295183)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24301138.svg)](https://doi.org/10.5281/zenodo.24301138)
 
 Código, modelos, registros de pruebas y scripts de análisis del artículo **«Gestión de tiempos de respuesta en un separador trifásico mediante automatización basada en Hardware in the Loop para la evaluación de controladores PID, MPC y Fuzzy»** (MDPI *Processes*, en
 preparación). El trabajo compara controladores **PID** (estructura incremental ejecutada con $T_d=0$), **Fuzzy (Mamdani)** y **MPC** sobre un separador trifásico
@@ -96,7 +96,7 @@ El periodo del OB lo fija el PLC y no depende del modelo de la planta. El artíc
 
 | Versión | Cambios |
 |---|---|
-| 3.1.2 | Versión que cita el artículo. El contraste del QP del MPC usa como referencia `quadprog` de MATLAB (*interior-point-convex*, holgura libre) e informa el código de salida, la optimalidad de primer orden y las iteraciones de la referencia; `Analisis/resultados_v12/salida_contrastar_qp_cotas_v12.txt` sale de MATLAB.|
+| 3.1.2 | Versión que cita el artículo. El contraste del QP del MPC usa como referencia `quadprog` de MATLAB (*interior-point-convex*, holgura libre) e informa el código de salida, la optimalidad de primer orden y las iteraciones de la referencia; `Analisis/resultados_v12/salida_contrastar_qp_cotas_v12.txt` sale de MATLAB. (https://doi.org/10.5281/zenodo.24301138)|
 | 3.1.1 | Añade las corridas de Simulink del PID y del Fuzzy con la planta corregida y la configuración de la CPU, las tablas de sensibilidad que salen de ellas, `LISTADO_CODIGOS_MATLAB.md` (https://doi.org/10.5281/zenodo.24295183) |
 | 3.1.0 | Script de las tablas (`calcular_resultados_articulo.m`, corridas de simulación de `Datos/Modelo_v12/`, MPC completo en la CPU (`Datos/MPC_1212C/`), SCL del MPC reducido, scripts de simulación, del segundo escenario y de verificación (https://doi.org/10.5281/zenodo.24290553) |
 | 3.0.0 | Modelo de la planta corregido (`tpsep_v12.m`). Con ese modelo y los mismos controladores: campañas nominal, de robustez, de cortes (C1, C2 y cable) y de fallas C3 a C5 en la CPU 1212C, todas con `Ciclos_Watchdog = 2` y TIA Portal desconectado (`Datos/*_v12/`); simulaciones del efecto del modelo, de las condiciones comunes, del horizonte de predicción y del segundo escenario (`Datos/Modelo_v12/`). Scripts de simulación y de verificación del modelo corregido; scripts de Unity con la secuencia de fallas y la reconexión tras un corte real (https://doi.org/10.5281/zenodo.24284441) |
